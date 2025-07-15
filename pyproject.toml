@@ -1,0 +1,19 @@
+[project]
+name = "aiotool"
+version = "1.0.0"
+description = "\"Tools which doing work with aiogram simple\""
+authors = [
+    {name = "Vlad_shayzi1",email = "tecnomega@mail.ru"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "aiogram (>=3.21.0,<4.0.0)",
+    "redis (>=6.2.0,<7.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
