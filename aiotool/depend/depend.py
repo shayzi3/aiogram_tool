@@ -30,6 +30,11 @@ class Depend:
                self.obj_name = self.obj.__class__.__name__
                self.obj = getattr(self.obj, "__call__")
                     
+          self.__explore_obj()
+          self.__explore_signature()
+          
+                    
+     def __explore_obj(self) -> None:
           if inspect.iscoroutinefunction(self.obj):
                self.isasync = True
                
@@ -42,8 +47,24 @@ class Depend:
                elif inspect.isgeneratorfunction(self.obj):
                     self.isgenerator = True
                     self.obj = contextmanager(self.obj)
-                         
-          
+                    
+               else:
+                    types = []
+                    for closure in inspect.getclosurevars(self.obj):
+                         if isinstance(closure, dict):
+                              types.extend(list(closure.values()))
+
+                    for type_ in types:
+                         name = getattr(type_, "__name__", None)
+                         if name == "_AsyncGeneratorContextManager":
+                              self.isasync = True
+                              self.isgenerator = True
+                              
+                         elif name == "_GeneratorContextManager":
+                              self.isgenerator = True
+                    
+                    
+     def __explore_signature(self) -> None:
           signature = inspect.signature(self.obj)
           for key, annotation in signature.parameters.items():
                default_value = annotation.default

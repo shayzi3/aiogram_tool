@@ -13,26 +13,29 @@ from aiotool.depend import (
 
 
 
-bot = Bot("7984677679:AAFhTRbqUdaz_ocz-Rf5KZsTpMD5MEnP-84")
+bot = Bot("TOKEN HERE")
 dp = Dispatcher()
 
 
 
 class Service:
-     def __init__(self):
-          self.data = "data"
+     def __init__(self, string: str):
+          self.string = string
           
           
      async def __call__(self, event: Message) -> str:
           await event.answer("Hello from __call__ of class Service")
-          return self.data
+          return self.string
+     
+     
+service = Service(string="my string")
           
 
 
 @dp.message(CommandStart())
 async def start(
      message: Message,
-     service: Annotated[Service, Depend(Service())],
+     service: Annotated[Service, Depend(service)],
 ):
      assert isinstance(service, str)
      await message.answer(service)
