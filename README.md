@@ -20,3 +20,8 @@ Depend on Router
 Depend without response for handler
 Exit from depend before call handler
 use_cache
+
+
+Feautures `Limit`:
+
+Fix limit for every handler

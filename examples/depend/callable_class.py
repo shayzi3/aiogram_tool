@@ -1,6 +1,5 @@
 import asyncio
 
-from redis import Redis
 from typing import Annotated
 
 from aiogram import Dispatcher, Bot
@@ -14,27 +13,29 @@ from aiotool.depend import (
 
 
 
-bot = Bot("TOKEN HERE")
+bot = Bot("7984677679:AAFhTRbqUdaz_ocz-Rf5KZsTpMD5MEnP-84")
 dp = Dispatcher()
 
 
-               
-def without_context():
-     with Redis() as session:
-          try:
-               yield session
-          finally:
-               session.close()
 
+class Service:
+     def __init__(self):
+          self.data = "data"
+          
+          
+     async def __call__(self, event: Message) -> str:
+          await event.answer("Hello from __call__ of class Service")
+          return self.data
+          
 
 
 @dp.message(CommandStart())
 async def start(
      message: Message,
-     redis_session_without_context: Annotated[Redis, Depend(without_context)]
+     service: Annotated[Service, Depend(Service())],
 ):
-     assert isinstance(redis_session_without_context, Redis)
-     await message.answer("SyncGenerator. Passed")
+     assert isinstance(service, str)
+     await message.answer(service)
      
      
      

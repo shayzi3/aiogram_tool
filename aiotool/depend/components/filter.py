@@ -13,7 +13,7 @@ from ..utils.inject import inject_parametrs
 class DependFilter(Filter):
      
      
-     async def __call__(self, *args: Any, **kwargs: dict[str, Any]) -> dict[str, Any] | bool:
+     async def __call__(self, *args: Any, **kwargs: dict[str, Any]) -> dict[str, Any]:
           handler_object: HandlerObject = kwargs.get("handler")
           dispatcher: Dispatcher = kwargs.get("dispatcher")
           

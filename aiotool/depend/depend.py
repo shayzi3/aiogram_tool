@@ -2,47 +2,47 @@ import inspect
 
 from contextlib import (
      asynccontextmanager, 
-     contextmanager,
-     _AsyncGeneratorContextManager,
-     _GeneratorContextManager
+     contextmanager
 )
-from typing import Callable, Any, _AnnotatedAlias
+from typing import (
+     Callable, 
+     Any, 
+     _AnnotatedAlias
+)
 
 
 
 class Depend:
-     def __init__(self, obj: Callable[[Any], Any]) -> None:
-          self.isgenerator = False
-          self.asyncfunc = False
+     def __init__(self, obj: Callable) -> None:
           self.obj = obj
-          
-          
-          if inspect.iscoroutinefunction(obj):
-               self.asyncfunc = True
-          
-          else:
-               if inspect.isasyncgenfunction(obj):
-                    self.isgenerator = True
-                    self.asyncfunc = True
-                    self.obj = asynccontextmanager(obj)
-               
-               elif inspect.isgeneratorfunction(obj):
-                    self.isgenerator = True
-                    self.obj = contextmanager(obj)
-                    
-               else:
-                    try:
-                         if isinstance(obj(), _AsyncGeneratorContextManager):
-                              self.isgenerator = True
-                              self.asyncfunc = True
-                              
-                         elif isinstance(obj(), _GeneratorContextManager):
-                              self.isgenerator = True
-                    except:
-                         pass
-                    
-          self.obj_name = obj.__name__
+          self.isgenerator = False
+          self.isasync = False
+          self.obj_name = getattr(obj, "__name__", "")
           self.arguments = {}
+          
+          if isinstance(self.obj, type):
+               raise TypeError("dont valid type. Initialize class")
+          
+          if not callable(self.obj):
+               raise TypeError("obj must be a callable")
+          
+          if not inspect.isfunction(self.obj):
+               self.obj_name = self.obj.__class__.__name__
+               self.obj = getattr(self.obj, "__call__")
+                    
+          if inspect.iscoroutinefunction(self.obj):
+               self.isasync = True
+               
+          else:
+               if inspect.isasyncgenfunction(self.obj):
+                    self.isgenerator = True
+                    self.isasync = True
+                    self.obj = asynccontextmanager(self.obj)
+                    
+               elif inspect.isgeneratorfunction(self.obj):
+                    self.isgenerator = True
+                    self.obj = contextmanager(self.obj)
+                         
           
           signature = inspect.signature(self.obj)
           for key, annotation in signature.parameters.items():
@@ -58,7 +58,7 @@ class Depend:
                     self.arguments[key] = default_value
                     
                else:
-                    self.arguments[key] = annotation
+                    self.arguments[key] = annotation.annotation
                     
                     
      async def call(self, middleware_data: dict[str, Any]) -> Any:
@@ -67,12 +67,9 @@ class Depend:
                if isinstance(value, Depend):
                     kwargs[key] = await value.call(middleware_data)
                else:
-                    try:
-                         kwargs[key] = middleware_data[key]
-                    except KeyError:
-                         raise KeyError(f"key {key} not exists in middleware data")
-          
-          if self.asyncfunc is False:
+                    kwargs[key] = middleware_data.get(key)
+
+          if self.isasync is False:
                if self.isgenerator is True:
                     with self.obj(**kwargs) as generator:
                          return generator
