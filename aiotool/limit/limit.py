@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from aiogram import Dispatcher
 from aiogram.filters import Filter
 from aiogram.types import Message
+from aiogram.dispatcher.event.handler import HandlerObject
 
 from .storage.abstract_storage import AbstractStorage
 from .storage import MemoryStorage
@@ -49,7 +50,12 @@ class Limit(Filter):
           )
           
           
-     async def __call__(self, message: Message, dispatcher: Dispatcher) -> bool:
+     async def __call__(
+          self, 
+          message: Message, 
+          dispatcher: Dispatcher, 
+          handler: HandlerObject
+     ) -> bool:
           storage = dispatcher.workflow_data.get("storage", MemoryStorage())
           answer_callback = dispatcher.workflow_data.get("answer_callback")
           
@@ -59,23 +65,24 @@ class Limit(Filter):
           if self.answer_callback is not None:
                answer_callback = self.answer_callback
                
-          user = str(message.from_user.id)
+          query = str(message.from_user.id) + "@" + handler.callback.__name__
           if self.all_users is True:
-               user = "users"
+               query = "users" + "@" + handler.callback.__name__
           
-          user_time = await storage.get(user)
+          user_time = await storage.get(query)
           if user_time is None:
-               await storage.update(user, datetime.utcnow() + self.time)
+               await storage.update(query, datetime.utcnow() + self.time)
                return True
                
           if user_time >= datetime.utcnow():
                time_last = user_time - datetime.utcnow()
                if answer_callback is not None:
                     await answer_callback(message, self.time, time_last)
+                    return True
                else:
                     await message.answer(f"Retry after {round(time_last.total_seconds(), 0)} seconds")
                return False
           
-          await storage.update(user, datetime.utcnow() + self.time)
+          await storage.update(query, datetime.utcnow() + self.time)
           return True
           
