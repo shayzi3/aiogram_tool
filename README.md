@@ -18,8 +18,3 @@ Feautures `Depend`:
 Depend without response for Router, handler
 Exit from depend before call handler
 use_cache
-
-
-Feautures `Limit`:
-
-Fix limit for every handler

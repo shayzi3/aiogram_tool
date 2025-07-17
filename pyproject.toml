@@ -1,5 +1,5 @@
 [project]
-name = "aiotool"
+name = "aiogram_tool"
 version = "1.0.0"
 description = "\"Tools which doing work with aiogram simple\""
 authors = [

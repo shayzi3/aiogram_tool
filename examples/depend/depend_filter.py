@@ -6,7 +6,7 @@ from aiogram import Dispatcher, Bot
 from aiogram.types import Message
 from aiogram.filters import CommandStart
 
-from aiotool.depend import (
+from aiogram_tool.depend import (
     Depend,
     setup_depend_tool,
     DependFilter
