@@ -1,4 +1,4 @@
-from typing import _AnnotatedAlias, Any
+from typing import Any
 
 from aiogram.filters import Filter
 from aiogram import Dispatcher

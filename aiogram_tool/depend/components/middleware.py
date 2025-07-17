@@ -1,4 +1,4 @@
-from typing import Any, Callable, Awaitable, _AnnotatedAlias
+from typing import Any, Callable, Awaitable
 
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from aiogram.types import Message

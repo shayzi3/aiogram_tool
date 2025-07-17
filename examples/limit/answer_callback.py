@@ -12,7 +12,7 @@ from aiogram_tool.limit import Limit, setup_limit_tool
 
 
 
-bot = Bot("7984677679:AAF6WmvkpfjosOA6t0ItYivdfvSiSFKBDng")
+bot = Bot("TOKEN HERE")
 dp = Dispatcher()
 
 
