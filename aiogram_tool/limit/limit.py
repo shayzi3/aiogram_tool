@@ -78,7 +78,6 @@ class Limit(Filter):
                time_last = user_time - datetime.utcnow()
                if answer_callback is not None:
                     await answer_callback(message, self.time, time_last)
-                    return True
                else:
                     await message.answer(f"Retry after {round(time_last.total_seconds(), 0)} seconds")
                return False

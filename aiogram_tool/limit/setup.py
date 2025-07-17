@@ -19,8 +19,9 @@ def setup_limit_tool(
      if not issubclass(type(storage), AbstractStorage):
           raise TypeError(f"Invalid type for storage")
      
-     if not inspect.iscoroutinefunction(answer_callback):
-          raise TypeError(f"answer_callback must be croutine function")
+     if answer_callback is not None:
+          if not inspect.iscoroutinefunction(answer_callback):
+               raise TypeError(f"answer_callback must be croutine function")
           
      dispatcher.__setitem__("storage", storage)
      dispatcher.__setitem__("answer_callback", answer_callback)
