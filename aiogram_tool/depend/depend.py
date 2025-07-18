@@ -92,12 +92,12 @@ class Depend:
 
           if self.isasync is False:
                if self.isgenerator is True:
-                    with self.obj(**kwargs) as generator:
-                         return generator
+                    with self.obj(**kwargs) as value:
+                         return value
                return self.obj(**kwargs)
                
           else:
                if self.isgenerator is True:
-                    async with self.obj(**kwargs) as asgenerator:
-                         return asgenerator
+                    async with self.obj(**kwargs) as asvalue:
+                         return asvalue
                return await self.obj(**kwargs)

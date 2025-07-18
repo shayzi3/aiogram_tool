@@ -19,14 +19,11 @@ pip install aiogram_tool
 poetry add aiogram_tool
 ```
 
-## Relevance
-The idea for this project came to mind after rewriting the same important functionality for each bot.
-
 
 ## Documentation
 
-- [RU]()
-- [EN]()
+- [RU](https://github.com/shayzi3/aiogram_tool/tree/master/docs/ru)
+- [EN](https://github.com/shayzi3/aiogram_tool/tree/master/docs/en)
 
 
 ## Features `Depend`

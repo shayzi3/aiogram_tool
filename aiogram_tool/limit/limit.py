@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 from aiogram import Dispatcher
 from aiogram.filters import Filter
-from aiogram.types import Message
+from aiogram.types.base import TelegramObject
 from aiogram.dispatcher.event.handler import HandlerObject
 
 from .storage.abstract_storage import AbstractStorage
@@ -24,7 +24,7 @@ class Limit(Filter):
           days: float = 0,
           all_users: bool = False,
           storage: AbstractStorage | None = None,
-          answer_callback: Callable[[Message, timedelta, datetime], Awaitable] | None = None
+          answer_callback: Callable[[TelegramObject, timedelta, datetime], Awaitable] | None = None
      ) -> None:
           if not isinstance(all_users, bool):
                raise TypeError("all_users must be bool type")
@@ -52,7 +52,7 @@ class Limit(Filter):
           
      async def __call__(
           self, 
-          message: Message, 
+          message: TelegramObject, 
           dispatcher: Dispatcher, 
           handler: HandlerObject
      ) -> bool:

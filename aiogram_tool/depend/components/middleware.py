@@ -1,7 +1,7 @@
 from typing import Any, Callable, Awaitable
 
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
-from aiogram.types import Message
+from aiogram.types.base import TelegramObject
 from aiogram import Dispatcher
 from aiogram.dispatcher.event.handler import HandlerObject
 
@@ -17,8 +17,8 @@ class DependMiddleware(BaseMiddleware):
           
      async def __call__(
           self, 
-          handler: Callable[[Message, dict[str, Any]], Awaitable], 
-          event: Message, 
+          handler: Callable[[TelegramObject, dict[str, Any]], Awaitable], 
+          event: TelegramObject, 
           data: dict[str, Any]
      ):
           handler_object: HandlerObject = data.get("handler")

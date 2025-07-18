@@ -4,6 +4,7 @@ from typing import Annotated
 
 from aiogram import Dispatcher, Bot
 from aiogram.types import Message
+from aiogram.types.base import TelegramObject
 from aiogram.filters import CommandStart
 
 from aiogram_tool.depend import (
@@ -23,7 +24,7 @@ class Service:
           self.string = string
           
           
-     async def __call__(self, event: Message) -> str:
+     async def __call__(self, event: TelegramObject) -> str:
           await event.answer("Hello from __call__ of class Service")
           return self.string
      

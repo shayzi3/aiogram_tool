@@ -4,6 +4,7 @@ from typing import Annotated
 
 from aiogram import Dispatcher, Bot
 from aiogram.types import Message
+from aiogram.types.base import TelegramObject
 from aiogram.filters import CommandStart
 
 from aiogram_tool.depend import (
@@ -18,12 +19,12 @@ bot = Bot("TOKEN HERE")
 dp = Dispatcher()
 
 
-async def test_generator(event: Message):
+async def test_generator(event: TelegramObject):
      await event.message.answer("Hello from generator")
      yield 1
 
 
-async def arguments(event: Message, num: Annotated[int, Depend(test_generator)]) -> str:
+async def arguments(event: TelegramObject, num: Annotated[int, Depend(test_generator)]) -> str:
      await event.answer(f"Hello from DependFilter. Num: {num}")  
      return "Hello!"   
      
