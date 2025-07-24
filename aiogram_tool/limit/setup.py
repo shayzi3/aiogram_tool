@@ -1,7 +1,7 @@
 import inspect
 
 from typing import Callable, Awaitable
-from aiogram.types import Message
+from aiogram.types.base import TelegramObject
 from aiogram import Dispatcher
 
 from datetime import datetime, timedelta
@@ -14,7 +14,7 @@ from .storage import MemoryStorage
 def setup_limit_tool(
      dispatcher: Dispatcher,
      storage: AbstractStorage = MemoryStorage(),
-     answer_callback: Callable[[Message, timedelta, datetime], Awaitable] | None = None
+     answer_callback: Callable[[TelegramObject, timedelta, datetime], Awaitable] | None = None
 ) -> None:
      if not issubclass(type(storage), AbstractStorage):
           raise TypeError(f"Invalid type for storage")

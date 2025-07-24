@@ -1,4 +1,5 @@
 from typing import Any, Callable, Awaitable
+from contextlib import AsyncExitStack
 
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from aiogram.types.base import TelegramObject
@@ -27,10 +28,12 @@ class DependMiddleware(BaseMiddleware):
           dependency_override: dict[str, Depend] = dispatcher.workflow_data.get("dependency_override", {})
           
           data.update({"event": event})
-          inject = await inject_parametrs(
-               callback=handler_object.callback,
-               dependency_override=dependency_override,
-               middleware_data=data
-          )
-          data.update(inject)
-          return await handler(event, data)
+          async with AsyncExitStack() as stack:
+               inject = await inject_parametrs(
+                    callback=handler_object.callback,
+                    dependency_override=dependency_override,
+                    middleware_data=data,
+                    stack=stack
+               )
+               data.update(inject)
+               return await handler(event, data)

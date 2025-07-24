@@ -1,5 +1,7 @@
 # Documentation for Limit
 
+`Warning!`
+`Each handler function name you add a filter to must be unique.`
 
 ### sync function: `setup_limit_tool`
 *arguments*:

@@ -1,4 +1,5 @@
 from typing import Any
+from contextlib import AsyncExitStack
 
 from aiogram.filters import Filter
 from aiogram import Dispatcher
@@ -20,9 +21,11 @@ class DependFilter(Filter):
           dependency_override: dict[str, Depend] = dispatcher.workflow_data.get("dependency_override", {})
           
           kwargs.update({"event": args[0]})
-          depend_kwargs = await inject_parametrs(
-               callback=handler_object.callback,
-               dependency_override=dependency_override,
-               middleware_data=kwargs
-          )
-          return depend_kwargs
+          async with AsyncExitStack() as stack:
+               depend_kwargs = await inject_parametrs(
+                    callback=handler_object.callback,
+                    dependency_override=dependency_override,
+                    middleware_data=kwargs,
+                    stack=stack
+               )
+               return depend_kwargs

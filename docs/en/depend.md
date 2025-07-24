@@ -1,5 +1,18 @@
 Documentation for Depend
 
+`Warning!`
+`When registering other middleware, it is important to pay attention to this,
+so that the latter is executed by DependMiddleware`.
+
+`Example:`
+```python
+
+dp.message.middleware(OneMiddleware())
+dp.message.middleware(TwoMiddleware())
+
+setup_depend_tool(dispatcher=dp)
+```
+
 ### sync_function: `setup_limit_tool`
 *arguments*:
 

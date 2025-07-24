@@ -1,5 +1,18 @@
 Документация ддля Depend
 
+`Предупреждение!`
+`При регистрации других middleware важно обратить внимание на то,
+чтобы последней выполнялась именно DependMiddleware`.
+
+`Пример:`
+```python
+
+dp.message.middleware(OneMiddleware())
+dp.message.middleware(TwoMiddleware())
+
+setup_depend_tool(dispatcher=dp)
+```
+
 ### sync_function: `setup_limit_tool`
 *arguments*:
 

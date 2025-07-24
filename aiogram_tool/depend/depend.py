@@ -2,7 +2,8 @@ import inspect
 
 from contextlib import (
      asynccontextmanager, 
-     contextmanager
+     contextmanager,
+     AsyncExitStack
 )
 from typing import (
      Callable, 
@@ -56,7 +57,7 @@ class Depend:
 
                     for type_ in types:
                          name = getattr(type_, "__name__", None)
-                         if name == "_AsyncGeneratorContextManager":
+                         if name in "_AsyncGeneratorContextManager":
                               self.isasync = True
                               self.isgenerator = True
                               
@@ -71,33 +72,33 @@ class Depend:
                
                if isinstance(annotation.annotation, _AnnotatedAlias):
                     types = getattr(annotation.annotation, "__metadata__")
-                    for type_ in types:
-                         if isinstance(type_, Depend):
-                              self.arguments[key] = type_
+                    for dep in types:
+                         if isinstance(dep, Depend):
+                              self.arguments[key] = dep
                               
                elif isinstance(default_value, Depend):
                     self.arguments[key] = default_value
                     
                else:
                     self.arguments[key] = annotation.annotation
-                    
-                    
-     async def call(self, middleware_data: dict[str, Any]) -> Any:
+                 
+     async def call(
+          self, 
+          middleware_data: dict[str, Any],
+          stack: AsyncExitStack
+     ) -> Any:
           kwargs = {}
           for key, value in self.arguments.items():
                if isinstance(value, Depend):
-                    kwargs[key] = await value.call(middleware_data)
+                    kwargs[key] = await value.call(middleware_data, stack)
                else:
                     kwargs[key] = middleware_data.get(key)
-
+                    
           if self.isasync is False:
                if self.isgenerator is True:
-                    with self.obj(**kwargs) as value:
-                         return value
+                    return stack.enter_context(self.obj(**kwargs))
                return self.obj(**kwargs)
-               
           else:
                if self.isgenerator is True:
-                    async with self.obj(**kwargs) as asvalue:
-                         return asvalue
+                    return await stack.enter_async_context(self.obj(**kwargs))
                return await self.obj(**kwargs)

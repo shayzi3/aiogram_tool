@@ -19,26 +19,20 @@ dp = Dispatcher()
 
 
 class UserService:
+     pass
 
-     @classmethod
-     async def get_service(cls) -> "UserService":
-          return cls()
-     
-     
-     @classmethod
-     def sync_get_service(cls) -> "UserService":
-          return cls()
+
+async def get_user_service():
+     return UserService()
 
 
 
 @dp.message(CommandStart())
 async def start(
      message: Message,
-     service: Annotated[UserService, Depend(UserService.get_service)],
-     sync_service: Annotated[UserService, Depend(UserService.sync_get_service)]
+     service: Annotated[UserService, Depend(get_user_service)],
 ):
      assert isinstance(service, UserService)
-     assert isinstance(sync_service, UserService)
      await message.answer("Default. Passed")
      
      

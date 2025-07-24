@@ -5,6 +5,7 @@ from typing import Any
 
 from aiogram import Dispatcher, Bot
 from aiogram.types import Message
+from aiogram.types.base import TelegramObject
 from aiogram.filters import CommandStart
 
 from aiogram_tool.limit import Limit, setup_limit_tool
@@ -25,7 +26,7 @@ async def start(message: Message):
      
      
 async def rate_limit_answer(
-     message: Message, 
+     message: TelegramObject, 
      time: timedelta, # Time at handler
      lost_time: datetime # Time to next execution of the request
 ) -> Any:
