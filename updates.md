@@ -1,6 +1,6 @@
 # Version `1.1.0` 
 
-##### Release date: 
+##### Release date: 2025-08-30 00
 
 ### Depend
 - Swith from middleware to filter

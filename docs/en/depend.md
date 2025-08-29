@@ -23,7 +23,7 @@ The problem is that the `DependFilter` class can be called multiple times if use
 The 'setup_depend_tool` function does this, namely, it adds a `DependFilter' filter to each handler in each event. When the method is `aiogram.dispatcher.event.handler.HandlerObject.check`will iterate over all handler filters, then `DependFilter' will be called most recently. This ensures that all filters passed for verification will be executed earlier and, accordingly, the `DependFilter` will be called when the handler is guaranteed to be suitable.
 
 
-[!CAUTION]
+> [!CAUTION]
 > Do not add the `DependFilter` class to the handler filters yourself! 
 > This can lead to bad consequences if the transmission is incorrect!
 
