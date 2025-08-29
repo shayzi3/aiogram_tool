@@ -1,10 +1,11 @@
 from .depend import Depend
-from .components.filter import DependFilter
 from .setup import setup_depend_tool
+from .components import DependExit, DependHandler
 
 
 __all__ = [
      "Depend",
-     "DependFilter",
      "setup_depend_tool",
+     "DependExit",
+     "DependFilter"
 ]

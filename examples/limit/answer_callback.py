@@ -8,7 +8,11 @@ from aiogram.types import Message
 from aiogram.types.base import TelegramObject
 from aiogram.filters import CommandStart
 
-from aiogram_tool.limit import Limit, setup_limit_tool
+from aiogram_tool.limit import (
+     Limit,
+     setup_limit_tool,
+     AnswerCallback
+)
 
 
 
@@ -27,8 +31,8 @@ async def start(message: Message):
      
 async def rate_limit_answer(
      message: TelegramObject, 
-     time: timedelta, # Time at handler
-     lost_time: datetime # Time to next execution of the request
+     time: timedelta,
+     lost_time: datetime
 ) -> Any:
      return await message.answer(
           f"До следующего использования команды: {lost_time.total_seconds()}"
@@ -39,7 +43,7 @@ async def rate_limit_answer(
 async def main():
      setup_limit_tool(
           dispatcher=dp,
-          answer_callback=rate_limit_answer
+          answer_callback=AnswerCallback(rate_limit_answer)
      )
      await dp.start_polling(bot)
      

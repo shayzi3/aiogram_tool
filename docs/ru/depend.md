@@ -1,55 +1,82 @@
-Документация ддля Depend
+### Как это работает?
 
-`Предупреждение!`
-`При регистрации других middleware важно обратить внимание на то,
-чтобы последней выполнялась именно DependMiddleware`.
+- Не работает через middleware, потому что:
 
-`Пример:`
-```python
+    - Inner middleware. Не поддерживает передачу MiddlewareData между собой. Если у вас зарегестрированно несколько inner middleware, то DependMiddleware должна выполняться последней для успешной передачи зависимостей в обработчик.
 
-dp.message.middleware(OneMiddleware())
-dp.message.middleware(TwoMiddleware())
+    - Outer middleware. Здесь проблема заключается в том, что вызов outer middleware происходит до обработки всех фильтров у обработчиков определённого события. Ключ 'handler' в MiddlewareData, передающейся в outer middleware, не определён, а это значит, что не получится сделать инъекцию зависимостей если нет обработчика.
 
-setup_depend_tool(dispatcher=dp)
-```
+#### Инъекция зависимостей через Filter
 
-### sync_function: `setup_limit_tool`
-*arguments*:
+Звучит странно, но попробую объяснить.
 
-        dispatcher:
-            экземпляр класса Dispacher из aiogram
+Так как использование outer middleware привело бы к костылям, то было принято решение делать всё с использованием класса Filter.
 
-        dependency_override:
-            Замена одной зависимости на другую
+Человеку, который разбирается в aiogram покажется это странным, потому что в методе класса `aiogram.dispatcher.handler.event.HandlerObject` есть метод `check`, который проверяет все фильтры у обработчика. А этот метод вызвается в методе класса `aiogram.dispatcher.event.telegram.TelegramEventObserver.trigger` в момент итерации по всем обработчикам, принадлежим пришедшему событию.
 
-        allowed_updates:
-            Список observers для добавления DependMiddleware
+Простыми словами: приходит событие, дальше aiogram среди обработчиков, принадлежих этому событию, ищет тот, который нужно вызвать. Этот поиск производится посредством вызова фильтров у каждого обработчика.
 
-        middleware: 
-            Использование middleware для пробрасывания зависимостей
+Проблема заключается в том, что класс `DependFilter` может быть вызван несколько раз при неправильном использовании. 
 
-- Example [dependency_override](https://github.com/shayzi3/aiogram_tool/tree/master/examples/depend/override_depend.py)
+#### Решение проблемы
+
+Этим занимается функция `setup_depend_tool`, а именно она каждому обработчику, в каждом событии в конец добавляет фильтр `DependFilter`. Когда метод `aiogram.dispatcher.event.handler.HandlerObject.check` будет производить итерацию по всем фильтрам обработчика, то `DependFilter` будет вызываться самым последним. Это даёт то, что все фильтры, переданные для проверки будут выполняться раньше и соответственно `DependFilter` вызовется тогда, когда обработчик будет гарантированно подходить.
 
 
-### class: `Depend`
-Класс для подключения зависимости
-
-*arguments*:
-
-        obj:
-            callable объект, принимающий только аргументы из MiddlewareData, а также event: TelegramObject. 
-            Также имеется поддержка классов с методом __call__
-
-- Example [sub dependencies](https://github.com/shayzi3/aiogram_tool/tree/master/examples/depend/sub_depend.py)
-- Example [default usage](https://github.com/shayzi3/aiogram_tool/tree/master/examples/depend/default.py)
-- Example [sync generators](https://github.com/shayzi3/aiogram_tool/tree/master/examples/depend/sync_generator.py)
-- Example [async generators](https://github.com/shayzi3/aiogram_tool/tree/master/examples/depend/async_generator.py)
-- Example [arguments in obj](https://github.com/shayzi3/aiogram_tool/tree/master/examples/depend/arguments.py)
-- Example [callable classes](https://github.com/shayzi3/aiogram_tool/tree/master/examples/depend/callable_class.py)
+[!CAUTION]
+> Не добавляйте класс `DependFilter` в фильтры обработчика самостоятельно! 
+> Это может привести к плохим последствиям при неправильной передаче!
 
 
+### Документация
 
-### class: `DependFilter`
-Класс позволяющий пробрасывать зависимости при помощи фильтра
 
-- Example [depend filter](https://github.com/shayzi3/aiogram_tool/tree/master/examples/depend/depend_filter.py)
+`function: setup_depend_tool`
+
+    arguments: 
+        dp: Dispatcher - (required)
+        dependency_override: dict[str, Depend] - (default {})
+        allowed_updates: list[str] - (default [])
+
+    Данная функция добавляет фильтр DependFilter каждому обработчику событий.
+
+
+`class: Depend`
+
+    arguments: 
+        obj: Callable - (required)
+
+    Данный класс позволяет добавить зависимость в обработчик.
+
+
+`class: DependFilter`
+    
+    arguments:
+        null
+
+    Данный класс обрабатывает зависимости и передаёт их в обработчик. 
+
+
+`class: DependExit`
+
+    arguments:
+        event: TelegramObject | None - (default None)
+        **event_kwargs
+
+    Если зависимость возвращает этот класс, то обработчик не будет вызван. 
+    Данный класс имеет метод 'event_answer', который вызывает метод 'answer' у 'event'. 
+    **event_kwargs, передаются в виде именовынных аргументов в метод 'answer'. 
+    Если не передать аргумент 'event', то пользователь не узнает, почему обработчик не был вызван.
+
+
+`class: DependHandler`
+
+    arguments:
+        *dependencies: Depend - (required)
+
+    Этот класс предоставляет возможность вызывать зависимости до вызова обработчика. 
+    Лучшая практика это из зависимости, переданной в 'dependencies', возвращать DependExit, в таком случае обработчик вызван НЕ будет. 
+    Обратите внимание! HandlerDepend не даёт возможности передавать зависимости в качестве аргументов в обработчик.
+
+
+[Со всеми примерами кода можно ознакомиться здесь](https://github.com/shayzi3/aiogram_tool/blob/master/examples/depend/)

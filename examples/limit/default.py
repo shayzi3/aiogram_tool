@@ -23,7 +23,7 @@ async def start(message: Message):
      
      
 async def main():
-     # setup_limit_tool(dispatcher=dp)
+     setup_limit_tool(dispatcher=dp)
      await dp.start_polling(bot)
      
      

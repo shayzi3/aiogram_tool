@@ -1,11 +1,6 @@
-import inspect
-
-from typing import Callable, Awaitable
-from aiogram.types.base import TelegramObject
 from aiogram import Dispatcher
 
-from datetime import datetime, timedelta
-
+from .utils.callback import AnswerCallback
 from .storage.abstract_storage import AbstractStorage
 from .storage import MemoryStorage
 
@@ -14,14 +9,17 @@ from .storage import MemoryStorage
 def setup_limit_tool(
      dispatcher: Dispatcher,
      storage: AbstractStorage = MemoryStorage(),
-     answer_callback: Callable[[TelegramObject, timedelta, datetime], Awaitable] | None = None
+     answer_callback: AnswerCallback | None = None
 ) -> None:
+     if not isinstance(dispatcher, Dispatcher):
+          raise TypeError("Invalid type for dispatcher")
+     
      if not issubclass(type(storage), AbstractStorage):
-          raise TypeError(f"Invalid type for storage")
+          raise TypeError("Invalid type for storage")
      
      if answer_callback is not None:
-          if not inspect.iscoroutinefunction(answer_callback):
-               raise TypeError(f"answer_callback must be croutine function")
-          
-     dispatcher.__setitem__("storage", storage)
-     dispatcher.__setitem__("answer_callback", answer_callback)
+          if not isinstance(answer_callback, AnswerCallback):
+               raise TypeError("Invalid type for answer_callback")
+     
+     dispatcher["storage"] = storage
+     dispatcher["answer_callback"] = answer_callback

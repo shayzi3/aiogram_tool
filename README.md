@@ -28,6 +28,6 @@ poetry add aiogram_tool
 
 ## Features `Depend`
 
-- Depend without response for Router, handler
-- Exit from depend before call handler
-- use cache
+- Depend for Router
+- cache
+- scopes

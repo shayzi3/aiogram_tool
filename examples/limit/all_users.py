@@ -1,13 +1,10 @@
 import asyncio
 
-from datetime import datetime, timedelta
-from typing import Any
-
 from aiogram import Dispatcher, Bot
 from aiogram.types import Message
 from aiogram.filters import CommandStart
 
-from aiogram_tool.limit import Limit
+from aiogram_tool.limit import Limit, setup_limit_tool
 
 
 
@@ -18,11 +15,11 @@ dp = Dispatcher()
 
 @dp.message(CommandStart(), Limit(seconds=5, all_users=True))
 async def start(message: Message):
-     # All users restricts the use of the command for all users
      await message.answer("Test RateLimit success")
      
      
 async def main():
+     setup_limit_tool(dispatcher=dp)
      await dp.start_polling(bot)
      
      

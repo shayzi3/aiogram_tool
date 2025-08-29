@@ -13,7 +13,7 @@ from ..depend import Depend
 
 async def depend_call(
      depend: Depend, 
-     dependency_override: dict[str, Any],
+     dependency_override: dict[str, Depend],
      middleware_data: dict[str, Any],
      stack: AsyncExitStack
 ) -> Any:
@@ -30,7 +30,7 @@ async def inject_parametrs(
      middleware_data: dict[str, Any],
      dependency_override: dict[str, Depend] = {},
 ) -> dict[str, Any]:
-     data = {}
+     injected_params = {}
      signature = inspect.signature(callback)
      for key, annotation in signature.parameters.items():
           default_value = annotation.default
@@ -39,7 +39,7 @@ async def inject_parametrs(
                types = getattr(annotation.annotation, "__metadata__")
                for dep in types:
                     if isinstance(dep, Depend):
-                         data[key] = await depend_call(
+                         injected_params[key] = await depend_call(
                               depend=dep,
                               dependency_override=dependency_override,
                               middleware_data=middleware_data,
@@ -47,10 +47,10 @@ async def inject_parametrs(
                          )
                          
           elif isinstance(default_value, Depend):
-               data[key] = await depend_call(
+               injected_params[key] = await depend_call(
                     depend=default_value,
                     dependency_override=dependency_override,
                     middleware_data=middleware_data,
                     stack=stack
                )
-     return data
+     return injected_params
