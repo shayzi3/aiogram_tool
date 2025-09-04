@@ -2,7 +2,6 @@ import asyncio
 
 from redis.asyncio import Redis as AsyncRedis
 from typing import Annotated
-from contextlib import asynccontextmanager
 
 from aiogram import Dispatcher, Bot
 from aiogram.types import Message
@@ -19,17 +18,7 @@ bot = Bot("TOKEN HERE")
 dp = Dispatcher()
 
 
-@asynccontextmanager
-async def with_context():
-     async with AsyncRedis() as session:
-          try:
-               yield session
-          finally:
-               await session.aclose()
-               
-               
-               
-async def without_context():
+async def session():
      async with AsyncRedis() as session:
           try:
                yield session
@@ -41,11 +30,9 @@ async def without_context():
 @dp.message(CommandStart())
 async def start(
     message: Message,
-    redis_session_without_context: Annotated[AsyncRedis, Depend(without_context)],
-    redis_session_with_context: Annotated[AsyncRedis, Depend(with_context)]
+    redis_session: Annotated[AsyncRedis, Depend(session)],
 ):
-    assert isinstance(redis_session_without_context, AsyncRedis)
-    assert isinstance(redis_session_with_context, AsyncRedis)
+    assert isinstance(redis_session, AsyncRedis)
     await message.answer("AsyncGenerator. Passed")
      
      

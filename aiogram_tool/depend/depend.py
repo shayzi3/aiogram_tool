@@ -1,104 +1,63 @@
 import inspect
 
-from contextlib import (
-     asynccontextmanager, 
-     contextmanager,
-     AsyncExitStack
-)
-from typing import (
-     Callable, 
-     Any, 
-     _AnnotatedAlias
-)
+from typing import Callable, Any
+from contextlib import AsyncExitStack
+
+from .utils.explore_obj import ExploreObj
+from .types.schema import ScopeObject
+from .types.enums import Scope
 
 
 
-class Depend:
+class Depend(ExploreObj):
+     app_container = {}
+     
      def __init__(self, obj: Callable) -> None:
-          self.obj = obj
-          self.isgenerator = False
-          self.isasync = False
-          self.obj_name = getattr(obj, "__name__", "")
-          self.arguments = {}
-          
-          if isinstance(self.obj, type):
-               raise TypeError("dont valid type. Initialize class")
-          
-          if not callable(self.obj):
-               raise TypeError("obj must be a callable")
-          
-          if not inspect.isfunction(self.obj):
-               self.obj_name = self.obj.__class__.__name__
-               self.obj = getattr(self.obj, "__call__")
-                    
-          self.__explore_obj()
-          self.__explore_signature()
-          
-                    
-     def __explore_obj(self) -> None:
-          if inspect.iscoroutinefunction(self.obj):
-               self.isasync = True
-               
-          else:
-               if inspect.isasyncgenfunction(self.obj):
-                    self.isgenerator = True
-                    self.isasync = True
-                    self.obj = asynccontextmanager(self.obj)
-                    
-               elif inspect.isgeneratorfunction(self.obj):
-                    self.isgenerator = True
-                    self.obj = contextmanager(self.obj)
-                    
-               else:
-                    types = []
-                    for closure in inspect.getclosurevars(self.obj):
-                         if isinstance(closure, dict):
-                              types.extend(list(closure.values()))
+          self.scope = Scope.REQUEST
 
-                    for type_ in types:
-                         name = getattr(type_, "__name__", None)
-                         if name in "_AsyncGeneratorContextManager":
-                              self.isasync = True
-                              self.isgenerator = True
-                              
-                         elif name == "_GeneratorContextManager":
-                              self.isgenerator = True
+          explore_obj = obj
+          if not inspect.iscoroutinefunction(obj):
+               try:
+                    scope_object = obj() 
+                    if isinstance(scope_object, ScopeObject):
+                         explore_obj = scope_object.obj
+                         self.scope = scope_object.scope
+               except:
+                    pass
                     
-                    
-     def __explore_signature(self) -> None:
-          signature = inspect.signature(self.obj)
-          for key, annotation in signature.parameters.items():
-               default_value = annotation.default
-               
-               if isinstance(annotation.annotation, _AnnotatedAlias):
-                    types = getattr(annotation.annotation, "__metadata__")
-                    for dep in types:
-                         if isinstance(dep, Depend):
-                              self.arguments[key] = dep
-                              
-               elif isinstance(default_value, Depend):
-                    self.arguments[key] = default_value
-                    
-               else:
-                    self.arguments[key] = annotation.annotation
-                 
+          super().__init__(obj=explore_obj)
+          
      async def call(
           self, 
           middleware_data: dict[str, Any],
           stack: AsyncExitStack
      ) -> Any:
-          kwargs = {}
-          for key, value in self.arguments.items():
+          if self.scope == Scope.APP:
+               if self.obj_name in self.app_container:
+                    return self.app_container[self.obj_name]
+          
+          inject_obj_parameters = {}
+          for key, value in self.obj_parameters.items():
                if isinstance(value, Depend):
-                    kwargs[key] = await value.call(middleware_data, stack)
-               else:
-                    kwargs[key] = middleware_data.get(key)
+                    inject_obj_parameters[key] = await value.call(middleware_data, stack)
                     
+               elif value is inspect._empty:
+                    inject_obj_parameters[key] = middleware_data.get(key, None)
+                    
+          obj_returning = None
+          call_obj_with_params = self.obj(**inject_obj_parameters)
           if self.isasync is False:
                if self.isgenerator is True:
-                    return stack.enter_context(self.obj(**kwargs))
-               return self.obj(**kwargs)
+                    obj_returning = stack.enter_context(call_obj_with_params)
+               else:
+                    obj_returning = call_obj_with_params
           else:
                if self.isgenerator is True:
-                    return await stack.enter_async_context(self.obj(**kwargs))
-               return await self.obj(**kwargs)
+                    obj_returning = await stack.enter_async_context(call_obj_with_params)
+               else:
+                    obj_returning = await call_obj_with_params
+                    
+          if self.scope == Scope.APP:
+               if self.obj_name not in self.app_container:
+                    self.app_container[self.obj_name] = obj_returning
+          return obj_returning

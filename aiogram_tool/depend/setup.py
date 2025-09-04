@@ -1,10 +1,8 @@
 from aiogram import Dispatcher
 from aiogram.dispatcher.event.telegram import TelegramEventObserver
-from aiogram.dispatcher.event.handler import FilterObject
-
 
 from .depend import Depend
-from .components import DependFilter, StackMiddleware
+from .components import DependInnerMiddleware
 
 
 
@@ -25,25 +23,19 @@ def setup_depend_tool(
           dispatcher["dependency_override"] = dependency_override     
                
      if allowed_updates:
-          for allow in allowed_updates:
-               if allow not in dispatcher.observers:
-                    raise TypeError(f"Invalid observer {allow}")
+          for update in allowed_updates:
+               if update not in dispatcher.observers:
+                    raise TypeError(f"Invalid observer {update}")
                else:
-                    observer: TelegramEventObserver = getattr(dispatcher, allow)
-                    
-                    if observer.handlers:
-                         observer.outer_middleware(StackMiddleware())
-                         for handler in observer.handlers:
-                              handler.filters.append(FilterObject(DependFilter()))
+                    observer: TelegramEventObserver = dispatcher.observers.get(update)
+                    observer.middleware(DependInnerMiddleware())
      
      else:
           for allow in dispatcher.resolve_used_update_types():
                observer: TelegramEventObserver = getattr(dispatcher, allow)
+               observer.middleware(DependInnerMiddleware())
                
-               if observer.handlers:
-                    observer.outer_middleware(StackMiddleware())
-                    for handler in observer.handlers:
-                         handler.filters.append(FilterObject(DependFilter()))
+               
                     
                
                

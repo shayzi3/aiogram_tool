@@ -18,11 +18,11 @@ dp = Dispatcher()
 
 
 async def depend_one() -> str:
-     return "Depend One"
+     return "Function One"
 
 
 async def depend_two() -> str:
-     return "Depend Two"
+     return "Function Two"
 
 
 

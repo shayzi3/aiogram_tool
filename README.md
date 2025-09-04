@@ -29,5 +29,3 @@ poetry add aiogram_tool
 ## Features `Depend`
 
 - Depend for Router
-- cache
-- scopes

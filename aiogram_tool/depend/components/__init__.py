@@ -1,7 +1,7 @@
 from .exit import DependExit
 from .handler import DependHandler
-from .filter import DependFilter
-from .outer_middleware import StackMiddleware
+from .inner_middleware import DependInnerMiddleware
+
 
 __all__ = [
      "DependExit",

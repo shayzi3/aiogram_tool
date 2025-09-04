@@ -1,6 +1,5 @@
 import asyncio
 
-from redis import Redis
 from typing import Annotated
 
 from aiogram import Dispatcher, Bot
@@ -10,6 +9,8 @@ from aiogram.filters import CommandStart
 from aiogram_tool.depend import (
     Depend,
     setup_depend_tool,
+    Scope,
+    dependency_scope
 )
 
 
@@ -19,22 +20,23 @@ dp = Dispatcher()
 
 
 
-def session():
-     with Redis() as session:
-          try:
-               yield session
-          finally:
-               session.close()
+class UserService:
+     pass
+
+
+@dependency_scope(scope=Scope.APP)
+async def get_user_service():
+     return UserService()
 
 
 
 @dp.message(CommandStart())
 async def start(
      message: Message,
-     redis_session: Annotated[Redis, Depend(session)],
+     service: Annotated[UserService, Depend(get_user_service)],
 ):
-     assert isinstance(redis_session, Redis)
-     await message.answer("SyncGenerator. Passed")
+     assert isinstance(service, UserService)
+     await message.answer("Default. Passed")
      
      
      
