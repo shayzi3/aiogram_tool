@@ -31,8 +31,8 @@ def setup_depend_tool(
                     observer.middleware(DependInnerMiddleware())
      
      else:
-          for allow in dispatcher.resolve_used_update_types():
-               observer: TelegramEventObserver = getattr(dispatcher, allow)
+          for update in dispatcher.resolve_used_update_types():
+               observer: TelegramEventObserver = dispatcher.observers.get(update)
                observer.middleware(DependInnerMiddleware())
                
                
