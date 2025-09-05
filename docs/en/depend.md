@@ -19,6 +19,15 @@
     This class allows you to add a dependency to the handler.
 
 
+> [!TIP]
+> If a dependency has an argument that has a default value, then
+> this default value will be passed when calling the dependency.
+> Examples:
+> `async def dependency(flag: bool = True)` - When calling the dependency, flag will receive the True argument.
+> `async def dependency(event: TelegramObject)` - Arguments that do not have a default value receive the value from `middleware_data`.
+> It is also possible to pass `Depend` via a default value: `async def func(dep: Any = Depend(some_dep))`.
+
+
 `class: DependExit`
 
     arguments:

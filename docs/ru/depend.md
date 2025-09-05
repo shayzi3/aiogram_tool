@@ -1,6 +1,5 @@
 ### Документация
 
-
 `function: setup_depend_tool`
 
     arguments: 
@@ -17,6 +16,15 @@
         obj: Callable - (required)
 
     Данный класс позволяет добавить зависимость в обработчик.
+
+
+> [!TIP]
+> Если в зависимости есть аргумент, который имеет дефолтное значение, то
+> это дефолтное значение будет передано при вызове зависимости.
+> Примеры: 
+> `async def dependency(flag: bool = True)` - При вызове зависмости flag получит аргумент True.
+> `async def dependency(event: TelegramObject)` - Аргументы, не имеющие дефолтного значения, получают значение из `middleware_data`.
+> Также возможна передача `Depend` через дефолтное значение: `async def func(dep: Any = Depend(some_dep))`.
 
 
 `class: DependExit`
