@@ -1,6 +1,6 @@
 [project]
 name = "aiogram_tool"
-version = "1.2.0"
+version = "1.2.1"
 description = "Tools which doing work with aiogram simple"
 authors = [
     {name = "Vlad_shayzi1",email = "tecnomega@mail.ru"}
@@ -21,7 +21,10 @@ keywords = [
     "depends",
     "cooldown",
     "delay",
-    "DI"
+    "DI",
+    "callback",
+    "data",
+    "long"
 ]
 
 
