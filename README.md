@@ -5,6 +5,7 @@ It's libriary with tools for aiogram.
 # What kind of tools are these?
 - [Dependency Injection](https://github.com/shayzi3/aiogram_tool/blob/master/examples/depend/default.py)
 - [Rate limiter for handlers](https://github.com/shayzi3/aiogram_tool/blob/master/examples/limit/default.py)
+- [Solved long callback data](https://github.com/shayzi3/aiogram_tool/blob/master/examples/callback_data/default.py)
 
 
 ## Installation
