@@ -6,14 +6,13 @@ from aiogram import Dispatcher, Bot
 from aiogram.types import Message
 from aiogram.filters import CommandStart
 
-from aiogram_tool.depend import (
-    Depend,
+from aiogram_tool.tools.depend import (
+    Depends,
     setup_depend_tool,
 )
 
 
-
-bot = Bot("TOKEN HERE")
+bot = Bot("7070441846:AAH36cRO3jzlvrHiypFYnJwHXmpB9lffbVc")
 dp = Dispatcher()
 
 
@@ -26,11 +25,10 @@ async def get_user_service():
      return UserService()
 
 
-
 @dp.message(CommandStart())
 async def start(
      message: Message,
-     service: Annotated[UserService, Depend(get_user_service)],
+     service: Annotated[UserService, Depends(get_user_service)],
 ):
      assert isinstance(service, UserService)
      await message.answer("Default. Passed")

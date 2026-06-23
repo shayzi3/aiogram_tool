@@ -4,8 +4,8 @@ from aiogram import Dispatcher, Bot
 from aiogram.types import Message
 from aiogram.filters import CommandStart
 
-from aiogram_tool.depend import (
-     Depend, 
+from aiogram_tool.tools.depend import (
+     Depends, 
      setup_depend_tool,
      DependExit
 )
@@ -18,7 +18,7 @@ dp = Dispatcher()
 
 
 async def some_dependency(event: Message) -> str:
-     if "s" not in event.from_user.username:
+     if "9" not in event.from_user.username:
           return f"Hello {event.from_user.username}"
      return DependExit(event=event, text=f"Bye {event.from_user.username}")
      
@@ -26,8 +26,9 @@ async def some_dependency(event: Message) -> str:
 @dp.message(CommandStart())
 async def start(
      message: Message,
-     some_string: str = Depend(some_dependency)
+     some_string: str = Depends(some_dependency)
 ):
+     print("handler")
      await message.answer(some_string)  
      
      

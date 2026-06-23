@@ -6,8 +6,8 @@ from aiogram import Dispatcher, Bot
 from aiogram.types import Message
 from aiogram.filters import Command
 
-from aiogram_tool.depend import (
-    Depend,
+from aiogram_tool.tools.depend import (
+    Depends,
     setup_depend_tool,
 )
 
@@ -29,7 +29,7 @@ async def depend_two() -> str:
 @dp.message(Command("start_one"))
 async def start_one(
      message: Message,
-     text: Annotated[str, Depend(depend_one)]
+     text: Annotated[str, Depends(depend_one)]
 ):
      assert "Two" in text
      await message.answer(text)
@@ -39,7 +39,7 @@ async def start_one(
 @dp.message(Command("start_two"))
 async def start_two(
      message: Message,
-     text: Annotated[str, Depend(depend_two)]
+     text: Annotated[str, Depends(depend_two)]
 ):
      assert "One" in text
      await message.answer(text)
@@ -48,8 +48,8 @@ async def start_two(
      
 async def main():
      override = {
-          "depend_one": Depend(depend_two),
-          "depend_two": Depend(depend_one)
+          "depend_one": Depends(depend_two),
+          "depend_two": Depends(depend_one)
      }
      setup_depend_tool(dispatcher=dp, dependency_override=override)
      await dp.start_polling(bot)

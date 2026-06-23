@@ -7,16 +7,14 @@ from aiogram.types import Message
 from aiogram.types.base import TelegramObject
 from aiogram.filters import CommandStart
 
-from aiogram_tool.depend import (
-    Depend,
+from aiogram_tool.tools.depend import (
+    Depends,
     setup_depend_tool,
 )
 
 
-
 bot = Bot("TOKEN HERE")
 dp = Dispatcher()
-
 
 
 async def arguments(event: TelegramObject) -> str:
@@ -27,7 +25,7 @@ async def arguments(event: TelegramObject) -> str:
 @dp.message(CommandStart())
 async def start(
      message: Message,
-     arguments: Annotated[str, Depend(arguments)]
+     arguments: Annotated[str, Depends(arguments)]
 ):
      await message.answer(arguments)  
      

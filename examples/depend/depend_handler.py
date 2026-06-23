@@ -5,32 +5,28 @@ from aiogram.types import Message
 from aiogram.filters import CommandStart
 from aiogram.types.base import TelegramObject
 
-from aiogram_tool.depend import (
+from aiogram_tool.tools.depend import (
      DependHandler,
      DependExit,
-     Depend
+     Depends
 )
 
-
-
-bot = Bot("TOKEN HERE")
+bot = Bot("7070441846:AAH36cRO3jzlvrHiypFYnJwHXmpB9lffbVc")
 dp = Dispatcher()
 
 
-users = {
-     "name": "balance"
-}
+users = {"shayZi1234": 10}
 
 
 async def user_register(event: TelegramObject) -> None:
      username = event.from_user.username
      
-     if username not in users:
+     if username not in users.keys():
           return DependExit(event=event, text="Not found balance.")
-     return f"Your balance {username}"
+     await event.answer(text=f"Your balance {users[username]}")
      
 
-@dp.message(CommandStart(), DependHandler(Depend(user_register)))
+@dp.message(CommandStart(), DependHandler(Depends(user_register)))
 async def start(message: Message):
      await message.answer(f"Hello!")  
      

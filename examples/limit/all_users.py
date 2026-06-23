@@ -4,7 +4,7 @@ from aiogram import Dispatcher, Bot
 from aiogram.types import Message
 from aiogram.filters import CommandStart
 
-from aiogram_tool.limit import Limit, setup_limit_tool
+from .limit import Limit, setup_limit_tool
 
 
 

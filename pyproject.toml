@@ -1,33 +1,17 @@
 [project]
-name = "aiogram_tool"
-version = "1.2.1"
-description = "Tools which doing work with aiogram simple"
-authors = [
-    {name = "Vlad_shayzi1",email = "tecnomega@mail.ru"}
-]
-license = "MIT"
+name = "aiogram-tool"
+version = "0.1.0"
+description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
-    "aiogram (>=3.22.0,<4.0.0)",
-    "redis (>=6.4.0,<7.0.0)"
-]
-keywords = [
-    "aiogram",
-    "rate",
-    "throttling",
-    "limit",
-    "dependency-injection",
-    "depends",
-    "cooldown",
-    "delay",
-    "DI",
-    "callback",
-    "data",
-    "long"
+    "aiogram>=3.29.0",
+    "cachetools>=7.1.4",
+    "redis>=8.0.0",
 ]
 
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[dependency-groups]
+dev = [
+    "aiohttp-socks>=0.11.0",
+    "pytest>=9.1.0",
+]

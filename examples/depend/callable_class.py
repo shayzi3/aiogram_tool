@@ -7,14 +7,14 @@ from aiogram.types import Message
 from aiogram.types.base import TelegramObject
 from aiogram.filters import CommandStart
 
-from aiogram_tool.depend import (
-    Depend,
+from aiogram_tool.tools.depend import (
+    Depends,
     setup_depend_tool,
 )
 
 
 
-bot = Bot("TOKEN HERE")
+bot = Bot("7070441846:AAH36cRO3jzlvrHiypFYnJwHXmpB9lffbVc")
 dp = Dispatcher()
 
 
@@ -36,7 +36,7 @@ service = Service(string="my string")
 @dp.message(CommandStart())
 async def start(
      message: Message,
-     service: Annotated[Service, Depend(service)],
+     service: Annotated[Service, Depends(service)],
 ):
      assert isinstance(service, str)
      await message.answer(service)

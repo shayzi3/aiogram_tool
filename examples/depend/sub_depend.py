@@ -7,8 +7,8 @@ from aiogram import Dispatcher, Bot
 from aiogram.types import Message
 from aiogram.filters import CommandStart
 
-from aiogram_tool.depend import (
-    Depend,
+from aiogram_tool.tools.depend import (
+    Depends,
     setup_depend_tool,
 )
 
@@ -27,14 +27,14 @@ async def redis_session():
                await session.aclose()
 
 
-async def get_name_from_redis(session: Annotated[AsyncRedis, Depend(redis_session)]):
+async def get_name_from_redis(session: Annotated[AsyncRedis, Depends(redis_session)]):
      return await session.get("user")
 
 
 @dp.message(CommandStart())
 async def start(
      message: Message,
-     user_name: Annotated[str, Depend(get_name_from_redis)]
+     user_name: Annotated[str, Depends(get_name_from_redis)]
 ):
      assert isinstance(user_name, str)
      await message.answer(f"Hello {user_name}")

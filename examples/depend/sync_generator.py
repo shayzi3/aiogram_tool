@@ -7,8 +7,8 @@ from aiogram import Dispatcher, Bot
 from aiogram.types import Message
 from aiogram.filters import CommandStart
 
-from aiogram_tool.depend import (
-    Depend,
+from aiogram_tool.tools.depend import (
+    Depends,
     setup_depend_tool,
 )
 
@@ -31,7 +31,7 @@ def session():
 @dp.message(CommandStart())
 async def start(
      message: Message,
-     redis_session: Annotated[Redis, Depend(session)],
+     redis_session: Annotated[Redis, Depends(session)],
 ):
      assert isinstance(redis_session, Redis)
      await message.answer("SyncGenerator. Passed")
