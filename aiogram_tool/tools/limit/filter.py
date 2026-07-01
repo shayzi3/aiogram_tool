@@ -4,7 +4,7 @@ from aiogram.dispatcher.event.handler import HandlerObject
 from aiogram.types import TelegramObject
 
 from aiogram_tool.utils.answer.rate_limit import RateLimitAnswer
-from aiogram_tool.storage.base import BaseStorage
+from aiogram_tool.storage.base import BaseLockStorage
 from aiogram_tool.tools.limit.rate_limit.base import BaseRateLimit
 from aiogram_tool.tools.limit.tool import RateLimitTool
 
@@ -16,13 +16,13 @@ class RateLimitFilter(Filter):
      def __init__(
           self,
           rate_limit: BaseRateLimit,
-          storage: BaseStorage | None = None,
+          storage: BaseLockStorage | None = None,
           answer_callback: RateLimitAnswer | None = None
      ) -> None:
-          if not isinstance(storage, BaseStorage):
+          if (storage is not None) and not isinstance(storage, BaseLockStorage):
                raise TypeError(f"Invalid type for storage {storage}")
           
-          if not isinstance(answer_callback, RateLimitAnswer):
+          if (answer_callback is not None) and not isinstance(answer_callback, RateLimitAnswer):
                raise TypeError(f"Invalid type for answer_callback {answer_callback}")
           
           if not isinstance(rate_limit, BaseRateLimit):
@@ -32,15 +32,18 @@ class RateLimitFilter(Filter):
           self.answer_callback = answer_callback
           self.rate_limit = rate_limit
           
+          
      def get_rate_limit_tool(self, dispatcher: Dispatcher) -> RateLimitTool:
           rate_limit_tool: RateLimitTool = dispatcher.workflow_data.get("rate_limit", None)
           if rate_limit_tool is None:
                raise ValueError("Not found RateLimitTool. Call setup function")
           return rate_limit_tool
      
+     
      def unique_handler_name(self, handler: HandlerObject) -> str:
           callback = handler.callback
           return getattr(callback, "__name__") + str(hash(callback))
+          
           
      async def __call__(
           self, 
@@ -52,7 +55,7 @@ class RateLimitFilter(Filter):
           
           if self.storage is None:
                if rate_limit_tool.storage is None:
-                    raise TypeError()
+                    raise TypeError(f"Not found storage. Add storage instance in filter or tool")
                self.storage = rate_limit_tool.storage
                
           if self.answer_callback is None:

@@ -7,5 +7,4 @@ def pack_without_errors(callback_data: CallbackData) -> str:
     for key, value in callback_data.model_dump(mode="python").items():
         encoded = callback_data._encode_value(key, value)
         result.append(encoded)
-        
     return callback_data.__separator__.join(result)

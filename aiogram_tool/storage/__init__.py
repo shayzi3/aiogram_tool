@@ -1,11 +1,17 @@
-from .impl.file import FileStorage
-from .impl.memory import MemoryLimitStorage, MemoryStorage
-from .impl.redis import AsyncRedisStorage
+from .impl.file import FileStorage, FileLockStorage
+from .impl.redis import AsyncRedisStorage, AsyncRedisLockStorage
+from .impl.memory import (
+     MemoryStorage,
+     MemoryLockStorage,
+)
+
 
 
 __all__ = [
      "FileStorage",
-     "MemoryLimitStorage",
      "MemoryStorage",
-     "AsyncRedisStorage"
+     "AsyncRedisStorage",
+     "MemoryLockStorage",
+     "FileLockStorage",
+     "AsyncRedisLockStorage"
 ]

@@ -2,7 +2,7 @@ from datetime import timedelta, datetime, timezone
 
 from aiogram.types import TelegramObject
 
-from aiogram_tool.storage.base import BaseStorage
+from aiogram_tool.storage.base import BaseLockStorage
 from aiogram_tool.tools.limit.schema import UserLimit
 from aiogram_tool.utils.answer.rate_limit import RateLimitAnswer
 from aiogram_tool.tools.limit.tool import RateLimitTool
@@ -28,7 +28,7 @@ class FixedWindowRateLimit(BaseRateLimit):
           unique_handler_name: str,
           tool: RateLimitTool,
           event: TelegramObject,
-          storage: BaseStorage,
+          storage: BaseLockStorage,
           answer_callback: RateLimitAnswer
      ) -> bool:
           key = self.build_key(
@@ -36,18 +36,16 @@ class FixedWindowRateLimit(BaseRateLimit):
                all_users=self.all_users,
                unique_handler_name=unique_handler_name
           )
-          lock = self.get_lock(
-               key=key,
-               tool=tool
-          )
+          prefix = tool.tool
           
-          current_time = datetime.now(tz=timezone.utc)
+          lock = await storage.lock(key)
           async with lock:
-               limit = await storage.get_value(key=key, prefix=tool.tool)
-               if limit is None:
+               current_time = datetime.now(tz=timezone.utc)
+               raw_user_limit = await storage.get_value(key=key, prefix=prefix)
+               if raw_user_limit is None:
                     await storage.set_value(
                          key=key,
-                         prefix=tool.tool,
+                         prefix=prefix,
                          value=UserLimit(
                               requests=self.requests - 1,
                               time=(current_time + self.time)
@@ -55,11 +53,11 @@ class FixedWindowRateLimit(BaseRateLimit):
                     )
                     return True
 
-               user_limit = UserLimit.from_json(limit)
+               user_limit = UserLimit.from_json(raw_user_limit)
                if user_limit.compare_time_ge(current_time):
                     await storage.set_value(
                          key=key,
-                         prefix=tool.tool,
+                         prefix=prefix,
                          value=UserLimit(
                               requests=self.requests - 1,
                               time=(current_time + self.time)
@@ -73,7 +71,7 @@ class FixedWindowRateLimit(BaseRateLimit):
 
                await storage.set_value(
                     key=key,
-                    prefix=tool.tool,
+                    prefix=prefix,
                     value=UserLimit(
                          requests=user_limit.requests - 1,
                          time=user_limit.time

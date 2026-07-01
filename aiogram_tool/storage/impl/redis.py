@@ -1,24 +1,46 @@
 from typing import Any
 
 from redis.asyncio import Redis as AsyncRedis
+from redis.asyncio.lock import Lock as RedisLock
 
-from aiogram_tool.storage.base import BaseStorage
+from aiogram_tool.storage.base import BaseStorage, BaseLockStorage
 
  
 
-
 class AsyncRedisStorage(BaseStorage):
      
-     def __init__(self, redis: AsyncRedis, expire: int | None = None) -> None:
+     def __init__(
+          self, 
+          redis: AsyncRedis, 
+          expire: int | None = None
+     ) -> None:
           self.redis = redis
           self.expire = expire
           
-     async def get_value(self, key: str, prefix: str) -> Any:
-          key_with_prefix = self.build_key(key, prefix)
-          return await self.redis.get(name=key_with_prefix)
+     async def get_value(self, key: str) -> Any:
+          return await self.redis.get(name=key)
                
-     async def set_value(self, key: str, value: Any, prefix: str) -> None:
-          key_with_prefix = self.build_key(key, prefix)
-          await self.redis.set(name=key_with_prefix, value=value, ex=self.expire)
+     async def set_value(self, key: str, value: Any) -> None:
+          await self.redis.set(name=key, value=value, ex=self.expire)
           
+
      
+class AsyncRedisLockStorage(AsyncRedisStorage, BaseLockStorage):
+     
+     def __init__(
+          self, 
+          redis: AsyncRedis, 
+          expire: int | None = None,
+     ) -> None:
+          super().__init__(
+               redis=redis,
+               expire=expire
+          )
+          
+     async def lock(self, key: str) -> RedisLock:
+          return self.redis.lock(
+               name=key,
+               timeout=10,
+               blocking_timeout=20
+          )
+               
