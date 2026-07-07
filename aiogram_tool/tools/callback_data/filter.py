@@ -7,7 +7,7 @@ from aiogram.filters.callback_data import CallbackQueryFilter, CallbackData
 from aiogram.types import CallbackQuery
 from magic_filter import MagicFilter
 
-from aiogram_tool.utils.answer.callback_data import CallbackDataAnswer
+from aiogram_tool.tools.callback_data.answer import CallbackDataAnswer
 from aiogram_tool.storage.base import BaseStorage
 from aiogram_tool.storage.impl.memory import MemoryStorage
 from aiogram_tool.utils.async_manager import async_manager

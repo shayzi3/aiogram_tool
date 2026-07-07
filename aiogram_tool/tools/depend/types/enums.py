@@ -8,4 +8,5 @@ class Scope(Enum):
      """
      APP = auto()
      REQUEST = auto()
+     STEP = auto()
      

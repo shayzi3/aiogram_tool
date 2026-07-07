@@ -3,7 +3,7 @@ from aiogram.filters import Filter
 from aiogram.dispatcher.event.handler import HandlerObject
 from aiogram.types import TelegramObject
 
-from aiogram_tool.utils.answer.rate_limit import RateLimitAnswer
+from aiogram_tool.tools.limit.answer import RateLimitAnswer
 from aiogram_tool.storage.base import BaseLockStorage
 from aiogram_tool.tools.limit.rate_limit.base import BaseRateLimit
 from aiogram_tool.tools.limit.tool import RateLimitTool

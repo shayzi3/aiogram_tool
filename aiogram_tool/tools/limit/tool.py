@@ -1,10 +1,9 @@
 from aiogram import Dispatcher
 
-from aiogram_tool.utils.answer.rate_limit import RateLimitAnswer
 from aiogram_tool.storage.base import BaseLockStorage
 from aiogram_tool.storage.impl.memory import MemoryLockStorage
 from aiogram_tool.tools.setup import BaseTool
-from aiogram_tool.utils.answer.rate_limit import RateLimitAnswer
+from aiogram_tool.tools.limit.answer import RateLimitAnswer
 
      
 

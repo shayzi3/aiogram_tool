@@ -1,6 +1,5 @@
-from typing import Any, Hashable
+from typing import Any, Hashable, MutableMapping
 from asyncio import Lock
-from collections.abc import MutableMapping
 
 from aiogram_tool.storage.base import BaseStorage, BaseLockStorage
 

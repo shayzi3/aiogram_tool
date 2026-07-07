@@ -2,11 +2,9 @@ from datetime import timedelta, datetime
 
 from aiogram.types import TelegramObject
 
-from .base import BaseAnswer
 
 
-
-class RateLimitAnswer(BaseAnswer):
+class RateLimitAnswer:
           
      async def __call__(
           self, 

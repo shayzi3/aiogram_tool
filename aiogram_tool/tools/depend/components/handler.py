@@ -5,7 +5,7 @@ from aiogram.filters import Filter
 from aiogram.types.base import TelegramObject
 
 from aiogram_tool.tools.depend.tool import DependTool
-from aiogram_tool.tools.depend.depend import Depends
+from aiogram_tool.tools.depend.depend import From
 from aiogram_tool.tools.depend.utils.resolver import DependResolver
 from .exit import DependExit
 
@@ -14,9 +14,9 @@ from .exit import DependExit
 class DependHandler(Filter):
      __slots__ = ("__dependencies",)
      
-     def __init__(self, *dependencies: Depends) -> None:
+     def __init__(self, *dependencies: From) -> None:
           for dep in dependencies:
-               if not isinstance(dep, Depends):
+               if not isinstance(dep, From):
                     raise TypeError("Invalid type in dependency")
           
           self.__dependencies = dependencies

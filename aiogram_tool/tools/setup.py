@@ -11,7 +11,7 @@ class BaseTool(ABC):
           self, 
           dispatcher: Dispatcher, 
      ) -> None:
-          ...
+          raise NotImplementedError
           
 
 

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from aiogram.types import TelegramObject
 
 from aiogram_tool.storage.base import BaseLockStorage
-from aiogram_tool.utils.answer.rate_limit import RateLimitAnswer
+from aiogram_tool.tools.limit.answer import RateLimitAnswer
 from aiogram_tool.tools.limit.tool import RateLimitTool
 
 

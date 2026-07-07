@@ -6,5 +6,5 @@ from .enums import Scope
 
 @dataclass
 class ScopeObject:
-     obj: Callable
+     depend: Callable
      scope: Scope
