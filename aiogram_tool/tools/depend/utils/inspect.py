@@ -1,59 +1,58 @@
-import inspect
-
-from typing import Callable, _AnnotatedAlias
+from typing import Callable, get_args, get_origin, Annotated
+from inspect import signature, Signature
+from functools import lru_cache
 
 from aiogram_tool.tools.depend.depend import From
-from aiogram_tool.tools.depend.types.schema import ScopeObject
-from aiogram_tool.tools.depend.types.enums import Scope
+from aiogram_tool.tools.depend.utils.scope_registry import ScopeRegistry
+from aiogram_tool.tools.depend.types.schema import InspectArgument
 
 
-
-def get_scope_object(depend: From) -> ScopeObject:
-     scope_object = ScopeObject(
-          depend=depend.depend,
-          scope=Scope.REQUEST
-     )
-     if getattr(depend.depend, "dependency_scope", None):
-          scope_object.scope = getattr(depend.depend, "dependency_scope")
-           
-     if depend.scope is not None:
-          scope_object.scope = depend.scope
-     return scope_object
+@lru_cache(maxsize=1024)
+def get_signature(obj: Callable) -> Signature:
+     return signature(obj)
 
 
-def get_depends(
+def get_arguments(
      obj: Callable, 
-     dependency_override: dict[Callable, From] | None = None
-) -> dict[str, ScopeObject]:
-     signature = inspect.signature(obj)
-          
-     handler_depends = {}
+     scope_registry: ScopeRegistry,
+     dependency_override: dict[Callable, From],
+) -> list[InspectArgument]:
+     signature = get_signature(obj)
+               
+     params = []
      for param_name, param_meta in signature.parameters.items():
-          if isinstance(param_meta.annotation, _AnnotatedAlias):
-               annotated_metas = getattr(param_meta.annotation, "__metadata__", [])
+          if get_origin(param_meta.annotation) is Annotated:
+               annotated_metas = get_args(param_meta.annotation)
                for meta in annotated_metas:
                     if isinstance(meta, From):
-                         if dependency_override:
-                              if meta.depend in dependency_override.keys():
-                                   meta = dependency_override[meta.depend]
-                         handler_depends[param_name] = get_scope_object(meta)
+                         meta = dependency_override.get(meta.depend, meta)
+                         params.append(
+                              InspectArgument(
+                                   name=param_name,
+                                   arg_kind=param_meta.kind,
+                                   value=scope_registry.get_scope_object(depend=meta)
+                              )
+                         )    
+                         break
                          
-          if isinstance(param_meta.default, From):
+          elif isinstance(param_meta.default, From):
                default = param_meta.default
-               if dependency_override:
-                    if default.depend in dependency_override.keys():
-                         default = dependency_override[default.depend]
-               handler_depends[param_name] = get_scope_object(default)
-     return handler_depends
-     
-
-def extract_call_object(obj: Callable) -> Callable:
-     if any(
-          [
-               inspect.isfunction(obj),
-               inspect.isclass(obj)
-          ]
-     ):
-          return obj
-     return getattr(obj, "__call__")  
+               default = dependency_override.get(default.depend, default)
+               params.append(
+                    InspectArgument(
+                         name=param_name,
+                         arg_kind=param_meta.kind,
+                         value=scope_registry.get_scope_object(depend=default)
+                    )
+               )
+               
+          else:
+               params.append(
+                    InspectArgument(
+                         name=param_name,
+                         arg_kind=param_meta.kind,
+                         value=param_meta.default
+                    )
+               )
+     return params
      

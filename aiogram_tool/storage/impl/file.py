@@ -5,6 +5,7 @@ from asyncio import Lock
 from typing import Any
 from collections.abc import MutableMapping
 
+from aiogram_tool.types import _MISSING
 from aiogram_tool.storage.base import BaseLockStorage
 from aiogram_tool.storage.impl.memory import MemoryStorage
 
@@ -28,7 +29,7 @@ class FileStorage(MemoryStorage):
           
      async def set_value(self, key: str, value: str) -> None:
           if "&" in key:
-               raise ValueError(f"Symbol & can't use in key {value}")
+               raise ValueError(f"Symbol & can't use in key {key}")
           
           async with aiofiles.open(self.file, "a") as aiofile:
                await aiofile.write(f"\n{key}&{value}")
@@ -36,7 +37,7 @@ class FileStorage(MemoryStorage):
           if self.memory:
                super().set_value(key=key, value=value)
             
-     async def get_value(self, key: str) -> Any:
+     async def get_value(self, key: str) -> Any | _MISSING: # type: ignore
           if self.memory:
                value = super().get_value(key=key)
                if value:
@@ -52,6 +53,7 @@ class FileStorage(MemoryStorage):
                     if self.memory:
                          await super().set_value(key, line_value)
                     return line_value
+          return _MISSING
           
                               
                               

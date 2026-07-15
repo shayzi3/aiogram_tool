@@ -1,64 +1,42 @@
-from typing import Any, Callable
+from typing_extensions import Self, Any
 from contextlib import (
      AsyncExitStack, 
-     asynccontextmanager,
-     contextmanager,
+     AbstractAsyncContextManager
 )
 
 from aiogram_tool.tools.depend.types.enums import Scope
 
 
 
-class AsyncExitStackTransaction(AsyncExitStack):
+class AsyncExitStackTransaction:
      
      def __init__(self, app_stack: AsyncExitStack) -> None:
           self.app_stack = app_stack
-          super().__init__()
+          self.stack = AsyncExitStack()
           
-     async def enter_async_context(
-          self, 
-          func: Callable, 
-          scope: Scope,
-          *args, 
-          **kwargs
-     ) -> Any:
-          stack = super()
-          if scope == Scope.APP:
-               stack = self.app_stack
-               
-          try:
-               return await stack.enter_async_context(func(*args, **kwargs))
-          except TypeError:
-               return await stack.enter_async_context(
-                    asynccontextmanager(func)(*args, **kwargs)
-               )
+     async def __aenter__(self) -> Self:
+          return self
      
-     async def enter_context(
-          self, 
-          func: Callable, 
+     async def __aexit__(self, *args) -> None:
+          await self.stack.aclose()
+          
+     def __get_stack(self, scope: Scope) -> AsyncExitStack:
+          return self.app_stack if scope == Scope.SINGLETON else self.stack
+     
+     async def enter_async_context(
+          self,
+          context_manager: AbstractAsyncContextManager,
           scope: Scope,
-          *args, 
-          **kwargs
      ) -> Any:
-          stack = super()
-          if scope == Scope.APP:
-               stack = self.app_stack
-               
-          try:
-               return stack.enter_context(func(*args, **kwargs))
-          except TypeError:
-               return stack.enter_context(
-                    contextmanager(func)(*args, **kwargs)
-               )
+          stack = self.__get_stack(scope)
+          return await stack.enter_async_context(context_manager)          
+     
 
 
-class AsyncExitStackTransactionManager(AsyncExitStack):
+class AsyncExitStackTransactionManager:
+     
+     def __init__(self):
+          self.stack = AsyncExitStack()
           
      def transaction(self) -> AsyncExitStackTransaction:
-          return AsyncExitStackTransaction(self)
-     
-
-     
-     
-          
-     
+          return AsyncExitStackTransaction(self.stack)

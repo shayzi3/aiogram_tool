@@ -5,13 +5,12 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "aiogram>=3.29.0",
-    "cachetools>=7.1.4",
+    "aiogram==3.29.1",
     "redis>=8.0.0",
 ]
 
 [dependency-groups]
 dev = [
     "aiohttp-socks>=0.11.0",
-    "pytest>=9.1.0",
+    "pytest-asyncio>=1.4.0",
 ]

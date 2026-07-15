@@ -3,4 +3,4 @@ __pycache__
 venv
 dist/
 test_file.txt
-*test.py
+*_test.py
