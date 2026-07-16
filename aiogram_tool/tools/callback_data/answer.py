@@ -7,4 +7,4 @@ from aiogram.types import CallbackQuery
 class CallbackDataAnswer:
           
      async def __call__(self, query: CallbackQuery) -> Any:
-          ...
+          await query.answer(text="Button expired", show_alert=True)

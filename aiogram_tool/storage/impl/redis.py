@@ -20,7 +20,9 @@ class AsyncRedisStorage(BaseStorage):
           
      async def get_value(self, key: str) -> Any:
           value = await self.redis.get(name=key)
-          return value if value else _MISSING
+          if value:
+               return value.decode() if isinstance(value, bytes) else value
+          return _MISSING
                
      async def set_value(self, key: str, value: Any) -> None:
           await self.redis.set(name=key, value=value, ex=self.expire)

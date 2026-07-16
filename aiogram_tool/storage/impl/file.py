@@ -39,7 +39,7 @@ class FileStorage(MemoryStorage):
             
      async def get_value(self, key: str) -> Any | _MISSING: # type: ignore
           if self.memory:
-               value = super().get_value(key=key)
+               value = await super().get_value(key=key)
                if value:
                     return value
                
@@ -48,6 +48,10 @@ class FileStorage(MemoryStorage):
                data.reverse()
                
           for line in data:
+               line = line.strip()
+               if not line:
+                    continue
+              
                line_key, line_value = line.split(sep="&", maxsplit=1)
                if line_key == key:
                     if self.memory:

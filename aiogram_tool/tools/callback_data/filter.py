@@ -1,6 +1,6 @@
 import secrets
 
-from typing import Any, Union, Dict, Optional, ClassVar
+from typing import Any, ClassVar
 from typing_extensions import Self
 
 from aiogram.filters.callback_data import CallbackQueryFilter, CallbackData
@@ -10,64 +10,70 @@ from magic_filter import MagicFilter
 from aiogram_tool.tools.callback_data.answer import CallbackDataAnswer
 from aiogram_tool.storage.base import BaseStorage
 from aiogram_tool.storage.impl.memory import MemoryStorage
-from aiogram_tool.utils.async_manager import async_manager
+from aiogram_tool.types import _MISSING
 from .utils.pack_callback_data import pack_without_errors
 
 
 UNIQUE_PREFIX: str = "UIDPR"
-SEPARATOR: str = "-"
 
 
 class _UniqueIDCallbackData(CallbackData, prefix=UNIQUE_PREFIX):
      unique_id: str
+     callback_data_prefix: str
      
      @classmethod
-     def build_unique_id(cls, callback_data_prefix: str) -> Self:
-          secret = secrets.randbits(
-               k=64 - (len(callback_data_prefix) + len(UNIQUE_PREFIX) + 2)
+     def build(cls, callback_data: CallbackData) -> Self:
+          separators_len = len(cls.__separator__) * len(cls.model_fields)
+          unique_id_len = (64 - (
+               len(UNIQUE_PREFIX) + 
+               len(callback_data.__prefix__) +
+               separators_len
+          )) // 2
+          
+          if unique_id_len < 6:
+               raise ValueError(
+                    f"Prefix '{callback_data.__prefix__}' at {callback_data.__class__.__name__} is too long. "
+                    f"Unique id must be at least 6 bytes (12 chars)."
+               )
+               
+          return cls(
+               unique_id=secrets.token_hex(unique_id_len),
+               callback_data_prefix=callback_data.__prefix__
           )
-          return cls(unique_id=SEPARATOR.join([callback_data_prefix, str(secret)]))
-     
-     def get_prefix_and_secret(self) -> list[str, str]:
-          return self.unique_id.split(SEPARATOR)
-     
-     
+
+          
 class LongCallbackQueryFilter(CallbackQueryFilter):
      
-     async def __call__(self, query: CallbackQuery) -> Union[bool, Dict[str, Any]]:
+     async def __call__(self, query: CallbackQuery) -> bool | dict[str, Any]:
           if not isinstance(query, CallbackQuery) or not query.data:
                return False
           
           try:
-               callback_data_instance = (
-                    _UniqueIDCallbackData
-                    if query.data[:len(UNIQUE_PREFIX)] == UNIQUE_PREFIX
-                    else self.callback_data
-               ).unpack(query.data)
+               instance = _UniqueIDCallbackData.unpack(query.data)
           except (TypeError, ValueError):
-               return False
+               try:
+                    instance = self.callback_data.unpack(query.data)
+               except (TypeError, ValueError):
+                    return False
           
-          if isinstance(callback_data_instance, _UniqueIDCallbackData):
-               prefix, unique_id = callback_data_instance.get_prefix_and_secret()
-               if prefix != self.callback_data.__prefix__:
+          if isinstance(instance, _UniqueIDCallbackData):
+               if instance.callback_data_prefix != getattr(self.callback_data, "__prefix__"):
                     return False
                     
                storage: BaseStorage = getattr(self.callback_data, "_storage")
                answer_callback: CallbackDataAnswer = getattr(self.callback_data, "_answer_callback")
                
-               packed_callback_data = await storage.get_value(
-                    key=unique_id,
-               )
-               if packed_callback_data is None:
+               packed_callback_data = await storage.get_value(key=instance.unique_id)
+               if packed_callback_data is _MISSING:
                     await answer_callback(query)
                     return False
                try:
-                    callback_data_instance = self.callback_data.unpack(packed_callback_data)
+                    instance = self.callback_data.unpack(packed_callback_data)
                except (TypeError, ValueError):
                     return False
                
-          if self.rule is None or self.rule.resolve(callback_data_instance):
-               return {"callback_data": callback_data_instance}
+          if self.rule is None or self.rule.resolve(instance):
+               return {"callback_data": instance}
           return False
      
      
@@ -75,27 +81,23 @@ class LongCallbackData(CallbackData, prefix="?"):
      _storage: ClassVar[BaseStorage] = MemoryStorage()
      _answer_callback: ClassVar[CallbackDataAnswer] = CallbackDataAnswer()
      
-     def pack(self) -> str:
+     async def pack_long(self) -> str:
           try:
                return super().pack()
           except ValueError as ex:
                if "data is too long!" in str(ex):
-                    unique_id_data = _UniqueIDCallbackData.build_unique_id(
-                         callback_data_prefix=self.__prefix__
+                    callback_data_instance = _UniqueIDCallbackData.build(
+                         callback_data=self
                     )
-                    _, unique_id = unique_id_data.get_prefix_and_secret()
-                    with async_manager as manager:
-                         manager.run_coroutine(
-                              self._storage.set_value(
-                                   key=unique_id,
-                                   value=pack_without_errors(self),
-                              )    
-                         )
-                    return unique_id_data.pack()
+                    await self._storage.set_value(
+                         key=callback_data_instance.unique_id,
+                         value=pack_without_errors(self),
+                    )    
+                    return callback_data_instance.pack()
                raise ex
                
      @classmethod
-     def filter(cls, rule: Optional[MagicFilter] = None) -> LongCallbackQueryFilter:
+     def filter(cls, rule: MagicFilter | None = None) -> LongCallbackQueryFilter:
           return LongCallbackQueryFilter(callback_data=cls, rule=rule)
                
                
