@@ -1,17 +1,18 @@
-from .depend import From
+from .depend import From, Depends
 from .components.exit import DependExit
 from .components.handler import DependHandler
-from .utils.depend_scope import dependency_scope
+from .utils.scope_registry import ScopeRegistry
 from .types.enums import Scope
 from .tool import DependTool
 
 
 __all__ = [
+     "Depends",
      "From",
      "DependExit",
      "DependFilter",
      "DependHandler",
-     "dependency_scope",
+     "ScopeRegistry",
      "Scope",
      "DependTool"
 ]

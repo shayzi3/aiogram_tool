@@ -21,10 +21,17 @@ class DependTool(BaseTool):
           allowed_updates: list[str] | None = None,
           scope_registry: ScopeRegistry | None = None
      ) -> None:
-          if dependency_override:
-               for depend in dependency_override.values():
+          if dependency_override is not None:
+               for key, depend in dependency_override.items():
+                    error_msg = None
+                    if not callable(key):
+                         error_msg = f"Key {key} in dependency override must be callable"
+
                     if not isinstance(depend, From):
-                         raise DependencyOverrideError(f"Invalid type in dependency_override {depend}")
+                         error_msg = f"Invalid type in dependency_override {depend}"
+                    
+                    if error_msg is not None:
+                         raise DependencyOverrideError(error_msg)
           
           self.dependency_override = dependency_override or {}
           self.allowed_updates = allowed_updates

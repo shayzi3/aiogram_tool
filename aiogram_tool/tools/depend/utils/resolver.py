@@ -150,7 +150,7 @@ class DependResolver:
 
                     elif isinstance(dependency_result, AbstractAsyncContextManager):
                          dependency_result = await self.stack.enter_async_context(
-                              func_result=dependency_result,
+                              context_manager=dependency_result,
                               scope=scope_object.scope
                          )
 

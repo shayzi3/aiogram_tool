@@ -7,10 +7,7 @@ from aiogram import Dispatcher
 class BaseTool(ABC):
      
      @abstractmethod
-     def setup(
-          self, 
-          dispatcher: Dispatcher, 
-     ) -> None:
+     def setup(self, dispatcher: Dispatcher) -> None:
           raise NotImplementedError
           
 

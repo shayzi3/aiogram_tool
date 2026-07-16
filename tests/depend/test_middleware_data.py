@@ -2,41 +2,27 @@ import pytest
 
 from typing import Annotated
 
-from aiogram_tool.tools.depend.depend import From
+from aiogram_tool.tools.depend.depend import Depends
 from aiogram_tool.tools.depend.utils.resolver import DependResolver
+from aiogram_tool.tools.depend.types.exceptions import InvalidMiddlewareDataArgumentError
 
-
-async def handler_depend(
-     my_data: str, 
-     other_data: str
-) -> str:
-     assert my_data == "hello" and other_data == "world"
-     return my_data + "_" + other_data
-
-
-async def handler_with_default_params(
-     my_data: str,
-     other_data: str = "name"
-) -> str:
-     assert my_data == "hello" and other_data == "name"
-     return my_data + "_" + other_data
-
-
-async def handler(
-     depend_data: Annotated[str, From(handler_depend)]
-) -> None:
-     return depend_data + "_" + "after_handler"
-
-
-async def handler_with_default_params(
-     depend_data: Annotated[str, From(handler_with_default_params)]
-) -> None:
-     return depend_data + "_" + "after_handler_with_default_params"
 
 
 async def test_arguments(
      depend_resolver: DependResolver
 ) -> None:
+     async def handler_depend(
+          my_data: str, 
+          other_data: str
+     ) -> str:
+          assert my_data == "hello" and other_data == "world"
+          return my_data + "_" + other_data
+     
+     async def handler(
+          depend_data: Annotated[str, Depends(handler_depend)]
+     ) -> None:
+          return depend_data + "_" + "after_handler"
+     
      depend_resolver.handler_callback = handler
      depend_resolver.middleware_data = {
           "my_data": "hello", 
@@ -52,15 +38,32 @@ async def test_arguments(
 async def test_unknown_arguments(
      depend_resolver: DependResolver
 ) -> None:
-     depend_resolver.handler_callback = handler
+     async def depend(argument: int) -> int:
+          return argument
      
-     with pytest.raises(ValueError):
+     async def handler(argument: Annotated[int, Depends(depend)]) -> int:
+          return argument
+     
+     depend_resolver.handler_callback = handler
+     with pytest.raises(InvalidMiddlewareDataArgumentError):
           await depend_resolver.resolve_callback_depends()
           
 
 async def test_default_argument(
      depend_resolver: DependResolver
 ) -> None:
+     async def handler_with_default_params(
+          my_data: str,
+          other_data: str = "name"
+     ) -> str:
+          assert my_data == "hello" and other_data == "name"
+          return my_data + "_" + other_data
+
+     async def handler_with_default_params(
+          depend_data: Annotated[str, Depends(handler_with_default_params)]
+     ) -> None:
+          return depend_data + "_" + "after_handler_with_default_params"
+
      depend_resolver.handler_callback = handler_with_default_params
      depend_resolver.middleware_data = {"my_data": "hello"}
      

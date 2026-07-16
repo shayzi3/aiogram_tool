@@ -20,7 +20,7 @@ class AsyncExitStackTransaction:
      async def __aexit__(self, *args) -> None:
           await self.stack.aclose()
           
-     def __get_stack(self, scope: Scope) -> AsyncExitStack:
+     def _get_stack(self, scope: Scope) -> AsyncExitStack:
           return self.app_stack if scope == Scope.SINGLETON else self.stack
      
      async def enter_async_context(
@@ -28,7 +28,7 @@ class AsyncExitStackTransaction:
           context_manager: AbstractAsyncContextManager,
           scope: Scope,
      ) -> Any:
-          stack = self.__get_stack(scope)
+          stack = self._get_stack(scope)
           return await stack.enter_async_context(context_manager)          
      
 

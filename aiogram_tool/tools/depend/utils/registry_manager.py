@@ -1,5 +1,5 @@
 from typing_extensions import Self
-from typing import Callable, Any
+from typing import Callable, Any, MutableMapping
 from contextlib import nullcontext
 from asyncio import Lock
 
@@ -20,7 +20,8 @@ class DependRegistryTransaction:
           return self
      
      async def __aexit__(self, *args) -> None:
-          return None
+          memory_storage: MutableMapping = getattr(self.storage, "storage")
+          memory_storage.clear()
           
      def _get_storage(self, scope: Scope) -> MemoryLockStorage | MemoryStorage | _MISSING:
           if scope == Scope.SINGLETON:
