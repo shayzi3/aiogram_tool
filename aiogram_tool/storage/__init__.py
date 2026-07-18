@@ -1,8 +1,14 @@
-from .impl.file import FileStorage, FileLockStorage
-from .impl.redis import AsyncRedisStorage, AsyncRedisLockStorage
+from .impl.redis import (
+     AsyncRedisStorage, 
+     AsyncRedisLockStorage
+)
 from .impl.memory import (
      MemoryStorage,
      MemoryLockStorage,
+)
+from .impl.file import (
+     FileStorage,
+     FileLockStorage
 )
 
 

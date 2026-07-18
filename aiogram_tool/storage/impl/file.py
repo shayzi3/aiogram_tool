@@ -35,7 +35,7 @@ class FileStorage(MemoryStorage):
                await aiofile.write(f"\n{key}&{value}")
           
           if self.memory:
-               super().set_value(key=key, value=value)
+               await super().set_value(key=key, value=value)
             
      async def get_value(self, key: str) -> Any | _MISSING: # type: ignore
           if self.memory:
