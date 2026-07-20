@@ -30,7 +30,7 @@ async def test_pack(
      
      unique_id = _UniqueIDCallbackData.unpack(heavy_pack)
      value_from_storage = await storage.get_value(
-          key=unique_id.unique_id
+          key=unique_id.get_storage_key()
      )
      HeavyCallbackData.unpack(value_from_storage)
      

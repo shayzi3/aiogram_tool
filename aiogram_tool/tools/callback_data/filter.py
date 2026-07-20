@@ -15,6 +15,7 @@ from .utils.pack_callback_data import pack_without_errors
 
 
 UNIQUE_PREFIX: str = "UIDPR"
+STORAGE_PREFIX: str = "aiot_callback_data"
 
 
 class _UniqueIDCallbackData(CallbackData, prefix=UNIQUE_PREFIX):
@@ -40,6 +41,9 @@ class _UniqueIDCallbackData(CallbackData, prefix=UNIQUE_PREFIX):
                unique_id=secrets.token_hex(unique_id_len),
                callback_data_prefix=callback_data.__prefix__
           )
+          
+     def get_storage_key(self) -> str:
+          return f"{STORAGE_PREFIX}@{self.unique_id}"
 
           
 class LongCallbackQueryFilter(CallbackQueryFilter):
@@ -63,7 +67,7 @@ class LongCallbackQueryFilter(CallbackQueryFilter):
                storage: BaseStorage = getattr(self.callback_data, "_storage")
                answer_callback: CallbackDataAnswer = getattr(self.callback_data, "_answer_callback")
                
-               packed_callback_data = await storage.get_value(key=instance.unique_id)
+               packed_callback_data = await storage.get_value(key=instance.get_storage_key())
                if packed_callback_data is _MISSING:
                     await answer_callback(query)
                     return False
@@ -90,7 +94,7 @@ class LongCallbackData(CallbackData, prefix="?"):
                          callback_data=self
                     )
                     await self._storage.set_value(
-                         key=callback_data_instance.unique_id,
+                         key=callback_data_instance.get_storage_key(),
                          value=pack_without_errors(self),
                     )    
                     return callback_data_instance.pack()

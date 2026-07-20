@@ -2,7 +2,6 @@ import aiofiles
 import os
 
 from asyncio import Lock
-from typing import Any
 from collections.abc import MutableMapping
 
 from aiogram_tool.types import _MISSING
@@ -15,16 +14,16 @@ class FileStorage(MemoryStorage):
      def __init__(
           self, 
           file: str,
-          memory: bool = True,
           storage: MutableMapping | None = None
      ) -> None:
           if not os.path.exists(file):
                raise FileNotFoundError(f"File {file} not found")
           
-          self.memory = memory
           self.file = file
           
-          if memory:
+          self._is_memory = False
+          if storage is not None:
+               self._is_memory = True
                super().__init__(storage=storage)
           
      async def set_value(self, key: str, value: str) -> None:
@@ -34,11 +33,11 @@ class FileStorage(MemoryStorage):
           async with aiofiles.open(self.file, "a") as aiofile:
                await aiofile.write(f"\n{key}&{value}")
           
-          if self.memory:
+          if self._is_memory:
                await super().set_value(key=key, value=value)
             
-     async def get_value(self, key: str) -> Any | _MISSING: # type: ignore
-          if self.memory:
+     async def get_value(self, key: str) -> str | _MISSING:
+          if self._is_memory:
                value = await super().get_value(key=key)
                if value:
                     return value
@@ -54,7 +53,7 @@ class FileStorage(MemoryStorage):
               
                line_key, line_value = line.split(sep="&", maxsplit=1)
                if line_key == key:
-                    if self.memory:
+                    if self._is_memory:
                          await super().set_value(key, line_value)
                     return line_value
           return _MISSING
@@ -66,15 +65,13 @@ class FileLockStorage(FileStorage, BaseLockStorage):
      def __init__(
           self,
           file: str,
-          memory: bool = True,
           storage: MutableMapping | None = None,
           locks_storage: MutableMapping | None = None
      ) -> None:
           self.global_lock = Lock()
-          self.locks = locks_storage if locks_storage else {}
+          self.locks = locks_storage if locks_storage is not None else {}
           super().__init__(
                file=file,
-               memory=memory,
                storage=storage
           )
      

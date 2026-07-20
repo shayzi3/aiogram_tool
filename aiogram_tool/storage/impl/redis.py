@@ -18,9 +18,9 @@ class AsyncRedisStorage(BaseStorage):
           self.redis = redis
           self.expire = expire
           
-     async def get_value(self, key: str) -> Any:
+     async def get_value(self, key: str) -> str | _MISSING:
           value = await self.redis.get(name=key)
-          if value:
+          if value is not None:
                return value.decode() if isinstance(value, bytes) else value
           return _MISSING
                
@@ -42,9 +42,10 @@ class AsyncRedisLockStorage(AsyncRedisStorage, BaseLockStorage):
           )
           
      async def lock(self, key: str) -> RedisLock:
+          lock_key = f"aigram_tool_lock:{key}"
           return self.redis.lock(
-               name=key,
+               name=lock_key,
                timeout=10,
-               blocking_timeout=20
+               blocking_timeout=10,
           )
                

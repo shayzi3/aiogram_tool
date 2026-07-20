@@ -1,3 +1,4 @@
+from asyncio import Lock
 
 from aiogram_tool.tools.depend import (
      Depends,
@@ -56,6 +57,9 @@ async def test_singleton_scope(
      dependency = await depend_tool.registry.storage.get_value(
           key=singleton_func
      )
+     lock = depend_tool.registry.storage.locks.get(singleton_func)
+     
+     assert isinstance(lock, Lock)
      assert dependency == 5
      
      
@@ -94,6 +98,9 @@ async def test_singleton_scope_generator(
      dependency = await depend_tool.registry.storage.get_value(
           key=singleton_generator_func
      )
+     lock = depend_tool.registry.storage.locks.get(singleton_generator_func)
+     
+     assert isinstance(lock, Lock)
      assert dependency == 15
      assert getattr(depend_tool.stack_manager.stack, "_exit_callbacks", False)
                

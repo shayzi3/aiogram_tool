@@ -4,17 +4,21 @@ from contextlib import nullcontext
 from asyncio import Lock
 
 from aiogram_tool.types import _MISSING
-from aiogram_tool.storage.impl.memory import MemoryLockStorage, MemoryStorage
 from aiogram_tool.tools.depend.types.enums import Scope
+from aiogram_tool.tools.depend.storage.memory import (
+     DependencyMemoryLockStorage, 
+     DependencyMemoryStorage
+)
 
 
+MemoryStorageType = DependencyMemoryStorage | DependencyMemoryLockStorage
           
      
 class DependRegistryTransaction:
      
-     def __init__(self, app_storage: MemoryLockStorage) -> None:
+     def __init__(self, app_storage: DependencyMemoryLockStorage) -> None:
           self.app_storage = app_storage
-          self.storage = MemoryStorage()
+          self.storage = DependencyMemoryStorage()
           
      async def __aenter__(self) -> Self:
           return self
@@ -23,7 +27,7 @@ class DependRegistryTransaction:
           memory_storage: MutableMapping = getattr(self.storage, "storage")
           memory_storage.clear()
           
-     def _get_storage(self, scope: Scope) -> MemoryLockStorage | MemoryStorage | _MISSING:
+     def _get_storage(self, scope: Scope) -> MemoryStorageType | _MISSING:
           if scope == Scope.SINGLETON:
                return self.app_storage
           elif scope == Scope.REQUEST:
@@ -31,7 +35,7 @@ class DependRegistryTransaction:
           elif scope == Scope.TRANSIENT:
                return _MISSING
           
-     def _get_lock_storage(self, scope: Scope) -> MemoryLockStorage | _MISSING:
+     def _get_lock_storage(self, scope: Scope) -> DependencyMemoryLockStorage | _MISSING:
           if scope == Scope.SINGLETON:
                return self.app_storage
           return _MISSING
@@ -70,7 +74,7 @@ class DependRegistryTransaction:
 class DependRegistryTransactionManager:
      
      def __init__(self) -> None:
-          self.storage = MemoryLockStorage()
+          self.storage = DependencyMemoryLockStorage()
      
      def transaction(self) -> DependRegistryTransaction:
           return DependRegistryTransaction(self.storage)

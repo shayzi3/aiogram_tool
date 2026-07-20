@@ -4,7 +4,6 @@ from aiogram.types import TelegramObject
 
 from aiogram_tool.storage.base import BaseLockStorage
 from aiogram_tool.tools.limit.schema import UserLimit
-from aiogram_tool.tools.limit.tool import RateLimitTool
 from aiogram_tool.tools.limit.answer import RateLimitAnswer
 from .base import BaseRateLimit
 
@@ -40,29 +39,28 @@ class TokenBucketRateLimit(BaseRateLimit):
           new_tokens = past_tense * refill_rate
           return min(bucket_size, current_tokens + new_tokens)
      
+     def build_key(
+          self, 
+          event: TelegramObject, 
+          unique_handler_name: str
+     ) -> str:
+          user = str(event.from_user.id) if not self.all_users else "users"
+          return f"{self.storage_prefix}@{user}@{unique_handler_name}"
+     
      async def execute(
           self,
-          unique_handler_name: str,
-          tool: RateLimitTool,
           event: TelegramObject,
           storage: BaseLockStorage,
-          answer_callback: RateLimitAnswer
+          answer_callback: RateLimitAnswer,
+          key: str
      ) -> bool:
-          key = self.build_key(
-               event=event,
-               all_users=self.all_users,
-               unique_handler_name=unique_handler_name
-          )
-          prefix = tool.tool
-          
           lock = await storage.lock(key)
           async with lock:
                current_time = datetime.now(tz=timezone.utc)
 
-               bucket = await storage.get_value(prefix=prefix, key=key)
+               bucket = await storage.get_value(key=key)
                if bucket is None:
                     await storage.set_value(
-                         prefix=prefix,
                          key=key,
                          value=UserLimit(
                               requests=self.current_tokens - 1,
@@ -84,7 +82,6 @@ class TokenBucketRateLimit(BaseRateLimit):
                if updated_tokens < 1:
                     await storage.set_value(
                          key=key,
-                         prefix=prefix,
                          value=UserLimit(
                               requests=updated_tokens,
                               time=current_time
@@ -97,7 +94,6 @@ class TokenBucketRateLimit(BaseRateLimit):
 
                await storage.set_value(
                     key=key,
-                    prefix=prefix,
                     value=UserLimit(
                          requests=updated_tokens - 1,
                          time=current_time

@@ -1,4 +1,3 @@
-from typing import Any
 from abc import ABC, abstractmethod
 from contextlib import AbstractAsyncContextManager
 
@@ -9,11 +8,11 @@ from aiogram_tool.types import _MISSING
 class BaseStorage(ABC):
      
      @abstractmethod
-     async def set_value(self, key: Any, value: Any) -> None:
+     async def set_value(self, key: str, value: str) -> None:
           raise NotImplementedError
           
      @abstractmethod
-     async def get_value(self, key: Any) -> Any | _MISSING:
+     async def get_value(self, key: str) -> str | _MISSING:
           raise NotImplementedError
      
      
@@ -21,5 +20,5 @@ class BaseStorage(ABC):
 class BaseLockStorage(BaseStorage):
      
      @abstractmethod
-     async def lock(self, key: Any) -> AbstractAsyncContextManager[None]:
+     async def lock(self, key: str) -> AbstractAsyncContextManager[None]:
           raise NotImplementedError

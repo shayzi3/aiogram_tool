@@ -12,4 +12,4 @@ class RateLimitAnswer:
           time: timedelta, 
           lost_time: datetime
      ) -> None:
-          ...
+          await event.answer(text=f"Next request {datetime.strftime("%d %B %A %H:%M:%S")}")

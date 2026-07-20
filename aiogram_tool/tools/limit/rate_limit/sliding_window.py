@@ -5,7 +5,6 @@ from datetime import timedelta, datetime, timezone
 from aiogram.types import TelegramObject
 
 from aiogram_tool.storage.base import BaseLockStorage
-from aiogram_tool.tools.limit.tool import RateLimitTool
 from aiogram_tool.tools.limit.answer import RateLimitAnswer
 from .base import BaseRateLimit
 
@@ -23,31 +22,30 @@ class SlidingWindowRateLimit(BaseRateLimit):
           self.time = time
           self.all_users = all_users
           
+     def build_key(
+          self, 
+          event: TelegramObject, 
+          unique_handler_name: str
+     ) -> str:
+          user = str(event.from_user.id) if not self.all_users else "users"
+          return f"{self.storage_prefix}@{user}@{unique_handler_name}"
+          
      async def execute(
           self,
-          unique_handler_name: str,
-          tool: RateLimitTool,
           event: TelegramObject,
           storage: BaseLockStorage,
-          answer_callback: RateLimitAnswer
+          answer_callback: RateLimitAnswer,
+          key: str
      ) -> bool:
-          key = self.build_key(
-               event=event,
-               all_users=self.all_users,
-               unique_handler_name=unique_handler_name
-          )
-          prefix = tool.tool
-          
           lock = await storage.lock(key)
           async with lock:
                current_time = datetime.now(tz=timezone.utc)
                
-               times = await storage.get_value(key=key, prefix=prefix)
+               times = await storage.get_value(key=key)
                if times is None:
                     await storage.set_value(
                          key=key,
                          value=json.dumps([current_time.isoformat()]),
-                         prefix=prefix
                     )
                     return True
 
@@ -64,7 +62,6 @@ class SlidingWindowRateLimit(BaseRateLimit):
                     if len(active_user_time) != len(user_time):
                          await storage.set_value(
                               key=key,
-                              prefix=prefix,
                               value=json.dumps([timestamp.isoformat() for timestamp in active_user_time])
                          )
 
@@ -74,7 +71,6 @@ class SlidingWindowRateLimit(BaseRateLimit):
                active_user_time.append(current_time)
                await storage.set_value(
                     key=key,
-                    prefix=prefix,
                     value=json.dumps([timestamp.isoformat() for timestamp in active_user_time])
                )
                return True
