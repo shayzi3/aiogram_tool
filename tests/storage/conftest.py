@@ -30,7 +30,7 @@ async def storage_lock(request) -> AsyncGenerator[BaseLockStorage, None]:
           instance = param(file="./test.txt")
           
      elif param is AsyncRedisLockStorage:
-          instance = param(redis=Redis(protocol=2), expire=60)
+          instance = param(redis=Redis(protocol=2), expire=10)
      
      else:
           instance = param()

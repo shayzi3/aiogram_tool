@@ -49,11 +49,9 @@ class DependResolver:
           inject = {}
           for arg_meta in arguments:
                if isinstance(arg_meta.value, ScopeObject):
-                    resolved_depends = set()
-
                     depend_params = await self.resolve_depend_params(
                          scope_object=arg_meta.value,
-                         resolved_depends=resolved_depends
+                         resolved_depends=set()
                     )
                     inject[arg_meta.name] = await self.depend_call(
                          scope_object=arg_meta.value,
@@ -107,6 +105,9 @@ class DependResolver:
                               raise InvalidMiddlewareDataArgumentError(
                                    f"Detect invalid argument {arg_meta.name} in {scope_object.depend}"
                               )
+                         depend_params[arg_meta.name] = middleware_data_value
+                    else:
+                         middleware_data_value = self.middleware_data.get(arg_meta.name, arg_meta.value)
                          depend_params[arg_meta.name] = middleware_data_value
                     
           resolved_depends.remove(scope_object.depend)

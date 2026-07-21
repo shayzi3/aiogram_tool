@@ -9,6 +9,7 @@ from aiogram_tool.tools.depend.utils.registry_manager import DependRegistryTrans
 from aiogram_tool.tools.depend.utils.stack_manager import AsyncExitStackTransactionManager
 from aiogram_tool.tools.depend.types.exceptions import ObserverError, DependencyOverrideError
 from .components.inner_middleware import DependInnerMiddleware
+from .components.outer_middleware import DependOuterMiddleware
 from .depend import From
 
 
@@ -44,16 +45,21 @@ class DependTool(BaseTool):
           
      def setup(self, dispatcher: Dispatcher) -> None:
           dispatcher.shutdown.register(self.shutdown)
+          dispatcher.workflow_data["depend_tool"] = self
           
           updates = (
                self.allowed_updates 
                if self.allowed_updates is not None 
                else dispatcher.resolve_used_update_types()
           )
-          middleware = DependInnerMiddleware(depend_tool=self)
+          inner_middleware = DependInnerMiddleware(depend_tool=self)
+          outer_middleware = DependOuterMiddleware(depend_tool=self)
+          
           for update in updates:
                observer: TelegramEventObserver = dispatcher.observers.get(update, None)
                if observer is None:
                     raise ObserverError(f"Invalid observer {update}")
-               observer.middleware(middleware)
+               
+               observer.outer_middleware(outer_middleware)
+               observer.middleware(inner_middleware)
           
