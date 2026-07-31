@@ -10,9 +10,14 @@ from aiogram_tool.tools.depend import (
 )
 from aiogram_tool.tools.depend.types.exceptions import DependencyOverrideError, ObserverError
 from aiogram_tool.tools.depend.components.inner_middleware import DependInnerMiddleware
+from aiogram_tool.tools.depend.components.outer_middleware import DependOuterMiddleware
 from aiogram_tool.tools.depend.utils.registry_manager import DependRegistryTransactionManager
 from aiogram_tool.tools.depend.utils.stack_manager import AsyncExitStackTransactionManager
 
+
+@pytest.fixture(scope="function")
+def dispatcher() -> Dispatcher:
+     return Dispatcher()
 
 
 def test_depend_tool(
@@ -43,9 +48,11 @@ def test_depend_tool(
      assert shutdown_events[1].callback == depend_tool.shutdown
      
      for event in dispatcher.resolve_used_update_types():
-          oberver = dispatcher.observers.get(event)
-          middlewares = getattr(oberver.middleware, "_middlewares")
-          assert isinstance(middlewares[0], DependInnerMiddleware)
+          observer = dispatcher.observers.get(event)
+          inner_middlewares = getattr(observer.middleware, "_middlewares")
+          outer_middlewares = getattr(observer.outer_middleware, "_middlewares")
+          assert isinstance(inner_middlewares[0], DependInnerMiddleware)
+          assert isinstance(outer_middlewares[0], DependOuterMiddleware)
           
      
 def test_depend_tool_errors() -> None:
@@ -56,6 +63,8 @@ def test_depend_tool_errors() -> None:
           DependTool(
                dependency_override={some: 1}
           )
+     
+     with pytest.raises(DependencyOverrideError):
           DependTool(
                dependency_override={1: Depends(some)}
           )
@@ -87,8 +96,8 @@ def test_depend_tool_allowed_updates_empty(
      depend_tool.setup(dispatcher=dispatcher)
      
      for event in dispatcher.resolve_used_update_types():
-          oberver = dispatcher.observers.get(event)
-          assert not getattr(oberver.middleware, "_middlewares")
+          observer = dispatcher.observers.get(event)
+          assert not getattr(observer.middleware, "_middlewares")
           
           
 def test_depend_tool_allowed_updates(
@@ -108,17 +117,20 @@ def test_depend_tool_allowed_updates(
      depend_tool.setup(dispatcher=dispatcher)
      
      for event in dispatcher.resolve_used_update_types():
-          oberver = dispatcher.observers.get(event)
-          if oberver.event_name == "message":
+          observer = dispatcher.observers.get(event)
+          if observer.event_name == "message":
                assert isinstance(
-                    getattr(oberver.middleware, "_middlewares")[0],
+                    getattr(observer.middleware, "_middlewares")[0],
                     DependInnerMiddleware
                )
+               assert isinstance(
+                    getattr(observer.outer_middleware, "_middlewares")[0],
+                    DependOuterMiddleware
+               )
                
-          elif oberver.event_name == "callback_query":
-               assert not getattr(oberver.middleware, "_middlewares")
-
-
+          elif observer.event_name == "callback_query":
+               assert not getattr(observer.middleware, "_middlewares")
+               assert not getattr(observer.outer_middleware, "_middlewares")
      
      
      

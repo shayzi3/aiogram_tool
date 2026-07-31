@@ -11,7 +11,6 @@ from aiogram_tool.tools.callback_data.answer import CallbackDataAnswer
 from aiogram_tool.storage.base import BaseStorage
 from aiogram_tool.storage.impl.memory import MemoryStorage
 from aiogram_tool.types import _MISSING
-from .utils.pack_callback_data import pack_without_errors
 
 
 UNIQUE_PREFIX: str = "UIDPR"
@@ -23,7 +22,7 @@ class _UniqueIDCallbackData(CallbackData, prefix=UNIQUE_PREFIX):
      callback_data_prefix: str
      
      @classmethod
-     def build(cls, callback_data: CallbackData) -> Self:
+     def build(cls, callback_data: type[CallbackData]) -> Self:
           separators_len = len(cls.__separator__) * len(cls.model_fields)
           unique_id_len = (64 - (
                len(UNIQUE_PREFIX) + 
@@ -33,7 +32,7 @@ class _UniqueIDCallbackData(CallbackData, prefix=UNIQUE_PREFIX):
           
           if unique_id_len < 6:
                raise ValueError(
-                    f"Prefix '{callback_data.__prefix__}' at {callback_data.__class__.__name__} is too long. "
+                    f"Prefix '{callback_data.__prefix__}' at {callback_data.__name__} is too long. "
                     f"Unique id must be at least 6 bytes (12 chars)."
                )
                
@@ -85,17 +84,24 @@ class LongCallbackData(CallbackData, prefix="?"):
      _storage: ClassVar[BaseStorage] = MemoryStorage()
      _answer_callback: ClassVar[CallbackDataAnswer] = CallbackDataAnswer()
      
+     def _pack_without_errors(self) -> str:
+          result = [self.__prefix__]
+          for key, value in self.model_dump(mode="python").items():
+               encoded = self._encode_value(key, value)
+               result.append(encoded)
+          return self.__separator__.join(result)
+     
      async def pack_long(self) -> str:
           try:
                return super().pack()
           except ValueError as ex:
                if "data is too long!" in str(ex):
                     callback_data_instance = _UniqueIDCallbackData.build(
-                         callback_data=self
+                         callback_data=self.__class__
                     )
                     await self._storage.set_value(
                          key=callback_data_instance.get_storage_key(),
-                         value=pack_without_errors(self),
+                         value=self._pack_without_errors()
                     )    
                     return callback_data_instance.pack()
                raise ex

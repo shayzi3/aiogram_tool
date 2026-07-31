@@ -1,56 +1,56 @@
 from typing import Annotated
 
-from aiogram_tool.tools.depend.depend import Depends
-from aiogram_tool.tools.depend.utils.resolver import DependResolver
+from aiogram.types import Message
 
+from aiogram_tool.tools.depend import Depends
 
+from .conftest import MyDispatcher, MiddlewareRegistryType
 
-
-     
 
 async def test_init_class(
-     depend_resolver: DependResolver
+     my_dispatcher: MyDispatcher,
+     middleware_register: MiddlewareRegistryType
 ) -> None:
      class InitMethod:
-          def __init__(self, argument: str):
-               self.argument = argument
-
-          def hello(self) -> str:
-               return "Hello" + "_" + self.argument
-     
-     async def handler_with_init_depend(
-          my_init: Annotated[InitMethod, Depends(InitMethod)]
+          def __init__(self) -> None:
+               pass
+          
+     @my_dispatcher.message()
+     async def handle(
+          message: Message, 
+          ins: Annotated[InitMethod, Depends(InitMethod)]
      ) -> str:
-          assert isinstance(my_init, InitMethod)
-          return my_init.hello()
+          assert isinstance(message, Message)
+          assert isinstance(ins, InitMethod)
+          return "handle"
      
-     depend_resolver.handler_callback = handler_with_init_depend
-     depend_resolver.middleware_data = {"argument": "Vlad"}
-     
-     inject = await depend_resolver.resolve_callback_depends()
-     handler_result = await handler_with_init_depend(**inject)
-     assert handler_result == "Hello_Vlad"
+     middleware_register(["message"])
+     handle_result = await my_dispatcher.message_update() 
+       
+     assert handle_result == "handle"  
      
      
 async def test_call_class(
-     depend_resolver: DependResolver
+     my_dispatcher: MyDispatcher,
+     middleware_register: MiddlewareRegistryType
 ) -> None:
      class CallMethod:
           def __init__(self, command: str) -> None:
                self.command = command
 
-          async def __call__(self, name: str) -> str:
-               return self.command + "-" + name
+          async def __call__(self) -> str:
+               return self.command
 
-     async def handler_with_call_depend(
-          my_call: Annotated[str, Depends(CallMethod(command="Hello"))]
+     @my_dispatcher.message()
+     async def handle(
+          message: Message, 
+          call: Annotated[str, Depends(CallMethod(command="command"))]
      ) -> str:
-          assert my_call == "Hello-Vlad"
-          return my_call + "_" + "after_handler_with_call_depend"
-
-     depend_resolver.handler_callback = handler_with_call_depend
-     depend_resolver.middleware_data = {"name": "Vlad"}
+          assert isinstance(message, Message)
+          assert call == "command"
+          return "handle"
      
-     inject = await depend_resolver.resolve_callback_depends()
-     handler_result = await handler_with_call_depend(**inject)
-     assert handler_result == "Hello-Vlad_after_handler_with_call_depend"
+     middleware_register(["message"])
+     handle_result = await my_dispatcher.message_update() 
+       
+     assert handle_result == "handle"  

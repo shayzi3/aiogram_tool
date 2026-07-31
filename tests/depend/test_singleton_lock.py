@@ -1,18 +1,19 @@
 import asyncio
 
+from aiogram.types import Message
+
 from aiogram_tool.tools.depend import ScopeRegistry, Scope, Depends, DependTool
-from aiogram_tool.types import _MISSING
-from aiogram_tool.tools.depend.utils.resolver import DependResolver
-from aiogram_tool.tools.depend.utils.stack_manager import AsyncExitStackTransaction
-from aiogram_tool.tools.depend.utils.registry_manager import DependRegistryTransaction
+
+from .conftest import MyDispatcher, MiddlewareRegistryType
 
 
 async def test_singleton_lock(
      depend_tool: DependTool,
      scope_registry: ScopeRegistry,
-     registry_transaction: DependRegistryTransaction,
-     stack_transaction: AsyncExitStackTransaction
+     my_dispatcher: MyDispatcher,
+     middleware_register: MiddlewareRegistryType
 ) -> None:
+     depend_tool.scope_registry = scope_registry
      
      class Test:
           ...
@@ -21,39 +22,26 @@ async def test_singleton_lock(
      async def depend(
           wait_time: int, 
           flag: bool, 
-          depend_tool: DependTool
      ) -> Test:
           await asyncio.sleep(wait_time)
-          value = await depend_tool.registry.storage.get_value(depend)
-          assert value is _MISSING and flag is True
+          assert flag is True
           return Test()
           
-     async def handler(test: Test = Depends(depend)) -> None:
+     @my_dispatcher.message()
+     async def handle(message: Message, test: Test = Depends(depend)) -> None:
+          assert isinstance(message, Message)
           assert isinstance(test, Test)
+          return "handle"
           
      middleware_data = (
-          {"wait_time": 0.2, "flag": True, "depend_tool": depend_tool},
-          {"wait_time": 0.01, "flag": False, "depend_tool": depend_tool}
+          {"wait_time": 0.2, "flag": True},
+          {"wait_time": 0.01, "flag": False}
      )
-     resolver_first = DependResolver(
-          handler_callback=handler,
-          registry=registry_transaction,
-          stack=stack_transaction,
-          middleware_data=middleware_data[0],
-          dependency_override={},
-          scope_registry=scope_registry
-     )
-     resolver_second = DependResolver(
-          handler_callback=handler,
-          registry=registry_transaction,
-          stack=stack_transaction,
-          middleware_data=middleware_data[1],
-          dependency_override={},
-          scope_registry=scope_registry
-     )
-     await asyncio.gather(
+     middleware_register(["message"])
+     result = await asyncio.gather(
           *[
-               resolver_first.resolve_callback_depends(),
-               resolver_second.resolve_callback_depends()
+               my_dispatcher.message_update(**middleware_data[0]),
+               my_dispatcher.message_update(**middleware_data[1])
           ]
      )
+     assert result == ["handle", "handle"]

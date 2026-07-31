@@ -4,7 +4,6 @@ from aiogram import F
 from aiogram.types import CallbackQuery
 
 from aiogram_tool.storage.base import BaseStorage
-from aiogram_tool.storage.impl.memory import MemoryStorage
 from aiogram_tool.tools.callback_data.filter import (
      LongCallbackData, 
      LongCallbackQueryFilter,

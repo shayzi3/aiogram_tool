@@ -20,7 +20,7 @@ class DependOuterMiddleware(BaseMiddleware):
          event: TelegramObject,
          data: dict[str, Any]
      ) -> Any:
-          data["event"] = event
+          data["context"] = event
           async with self.depend_tool.registry.transaction() as req_registry:
                async with self.depend_tool.stack_manager.transaction() as req_stack:
                     data.update(

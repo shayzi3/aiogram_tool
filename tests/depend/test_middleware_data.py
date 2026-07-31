@@ -2,73 +2,83 @@ import pytest
 
 from typing import Annotated
 
+from aiogram.types import Message
+
 from aiogram_tool.tools.depend.depend import Depends
-from aiogram_tool.tools.depend.utils.resolver import DependResolver
 from aiogram_tool.tools.depend.types.exceptions import InvalidMiddlewareDataArgumentError
 
+from .conftest import MyDispatcher, MiddlewareRegistryType
 
 
 async def test_arguments(
-     depend_resolver: DependResolver
+     my_dispatcher: MyDispatcher,
+     middleware_register: MiddlewareRegistryType
 ) -> None:
-     async def handler_depend(
+     async def depend(
           my_data: str, 
           other_data: str
      ) -> str:
           assert my_data == "hello" and other_data == "world"
           return my_data + "_" + other_data
      
-     async def handler(
-          depend_data: Annotated[str, Depends(handler_depend)]
+     @my_dispatcher.message()
+     async def handle(
+          message: Message,
+          depend_data: Annotated[str, Depends(depend)]
      ) -> None:
-          return depend_data + "_" + "after_handler"
+          assert isinstance(message, Message)
+          assert depend_data == "hello_world"
+          return "handle"
      
-     depend_resolver.handler_callback = handler
-     depend_resolver.middleware_data = {
-          "my_data": "hello", 
-          "other_data": "world"
-     }
-     inject = await depend_resolver.resolve_callback_depends()
-     assert inject == {"depend_data": "hello_world"}
+     middleware_register(["message"])
+     handle_result = await my_dispatcher.message_update(
+          my_data="hello", 
+          other_data="world"
+     )
      
-     handler_result = await handler(**inject)
-     assert handler_result == "hello_world_after_handler"
+     assert handle_result == "handle"
      
   
 async def test_unknown_arguments(
-     depend_resolver: DependResolver
+     my_dispatcher: MyDispatcher,
+     middleware_register: MiddlewareRegistryType
 ) -> None:
      async def depend(argument: int) -> int:
           return argument
      
-     async def handler(argument: Annotated[int, Depends(depend)]) -> int:
+     @my_dispatcher.message()
+     async def handle(
+          message: Message, 
+          argument: Annotated[int, Depends(depend)]
+     ) -> int:
           return argument
      
-     depend_resolver.handler_callback = handler
+     middleware_register(["message"])
      with pytest.raises(InvalidMiddlewareDataArgumentError):
-          await depend_resolver.resolve_callback_depends()
-          
+          await my_dispatcher.message_update()          
+
 
 async def test_default_argument(
-     depend_resolver: DependResolver
+     my_dispatcher: MyDispatcher,
+     middleware_register: MiddlewareRegistryType
 ) -> None:
-     async def handler_with_default_params(
-          my_data: str,
-          other_data: str = "name"
-     ) -> str:
-          assert my_data == "hello" and other_data == "name"
-          return my_data + "_" + other_data
-
-     async def handler_with_default_params(
-          depend_data: Annotated[str, Depends(handler_with_default_params)]
-     ) -> None:
-          return depend_data + "_" + "after_handler_with_default_params"
-
-     depend_resolver.handler_callback = handler_with_default_params
-     depend_resolver.middleware_data = {"my_data": "hello"}
+     async def depend(data: str = "name") -> str:
+          return data
      
-     inject = await depend_resolver.resolve_callback_depends()
-     handler_result = await handler_with_default_params(**inject)
-     assert handler_result == "hello_name_after_handler_with_default_params"
+     @my_dispatcher.message()
+     async def handle(
+          message: Message,
+          depend_data: Annotated[str, Depends(depend)]
+     ) -> None:
+          return depend_data + "_" + "handle"
+     
+     middleware_register(["message"])
+     handle_result = await my_dispatcher.message_update()
+     
+     assert handle_result == "name_handle"
+     
+     handle_result = await my_dispatcher.message_update(data="other")
+     
+     assert handle_result == "other_handle"
      
      

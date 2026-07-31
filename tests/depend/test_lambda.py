@@ -1,22 +1,29 @@
 from typing import Annotated
 
-from aiogram_tool.tools.depend.depend import Depends
-from aiogram_tool.tools.depend.utils.resolver import DependResolver
+from aiogram.types import Message
+
+from aiogram_tool.tools.depend import Depends
+
+from .conftest import MyDispatcher, MiddlewareRegistryType
 
 
-
-async def handler_with_lambda(
-     integer: Annotated[int, Depends(lambda num: num**2)]
-) -> None:
-     assert integer == 100
-     
 
 async def test_lambda_depend(
-     depend_resolver: DependResolver
+     my_dispatcher: MyDispatcher,
+     middleware_register: MiddlewareRegistryType
 ) -> None:
-     depend_resolver.handler_callback = handler_with_lambda
-     depend_resolver.middleware_data = {"num": 10}
      
-     inject = await depend_resolver.resolve_callback_depends()
-     await handler_with_lambda(**inject)
+     @my_dispatcher.message()
+     async def handle(
+          message: Message,
+          integer: Annotated[int, Depends(lambda: 1)]
+     ) -> int:
+          assert isinstance(message, Message)
+          assert integer == 1
+          return "handle"
+     
+     middleware_register(["message"])
+     handle_result = await my_dispatcher.message_update()
+     
+     assert handle_result == "handle"
      

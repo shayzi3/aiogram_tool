@@ -1,12 +1,15 @@
 from typing import Annotated
 
-from aiogram_tool.tools.depend import Depends, ScopeRegistry, Scope
-from aiogram_tool.tools.depend.utils.resolver import DependResolver
+from aiogram.types import Message
+
+from aiogram_tool.tools.depend import Depends
+
+from .conftest import MyDispatcher, MiddlewareRegistryType
 
 
-
-async def test_subdepend_func(
-     depend_resolver: DependResolver
+async def test_subdepend(
+     my_dispatcher: MyDispatcher,
+     middleware_register: MiddlewareRegistryType
 ) -> None:
      class Test:
           def __init__(self, attr: str) -> None:
@@ -20,39 +23,18 @@ async def test_subdepend_func(
           assert test.attr == "Hello"
           return Test(attr=test.attr + " Vlad!")
      
-     async def handler(hello: Annotated[Test, Depends(depend)]) -> str:
-          assert isinstance(hello, Test)
-          assert hello.attr == "Hello Vlad!"
-          return hello.attr + " I'm 18"
-     
-     depend_resolver.handler_callback = handler
-     inject = await depend_resolver.resolve_callback_depends()
-     handler_result = await handler(**inject)
-     assert handler_result == "Hello Vlad! I'm 18"
-     
-     
-async def test_subdepend_func_request_scope(
-     depend_resolver: DependResolver,
-     scope_registry: ScopeRegistry
-) -> None:
-     class Test:
-          pass
-          
-     @scope_registry(Scope.REQUEST)
-     async def subdepend() -> Test:
-          return Test()
-     
-     async def depend(test: Annotated[Test, Depends(subdepend)]) -> Test:
-          return test
-     
-     async def handler(
-          arg: Annotated[Test, Depends(depend)],
-          sub_arg: Annotated[Test, Depends(subdepend)]
+     @my_dispatcher.message()
+     async def handle(
+          message: Message, 
+          test: Annotated[Test, Depends(depend)]
      ) -> str:
-          assert arg == sub_arg
+          assert isinstance(message, Message)
+          assert isinstance(test, Test)
+          assert test.attr == "Hello Vlad!"
+          return "handle"
      
-     depend_resolver.handler_callback = handler
-     depend_resolver.scope_registry = scope_registry
-     inject = await depend_resolver.resolve_callback_depends()
-     await handler(**inject)
+     middleware_register(["message"])
+     handle_result = await my_dispatcher.message_update()
+     
+     assert handle_result == "handle"
      

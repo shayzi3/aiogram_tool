@@ -1,98 +1,114 @@
 import pytest
 
 from typing import Annotated
+from typing_extensions import Self
 from contextlib import asynccontextmanager, contextmanager
 
+from aiogram import F
+from aiogram.types import Message
+
 from aiogram_tool.tools.depend.depend import Depends
-from aiogram_tool.tools.depend.utils.resolver import DependResolver
 from aiogram_tool.tools.depend.types.exceptions import ContextManagerError
 
+from .conftest import MyDispatcher, MiddlewareRegistryType
 
-class Generators:
+
+class Session:
      
      def __init__(self):
-          self.sync = None
-          self.async_ = None
-          self.sync_ctx = None
-          self.async_ctx = None
+          self.flag = None
      
-     @contextmanager
-     def bool_attr(self, attr: str):
-          setattr(self, attr, True)
-          yield
-          setattr(self, attr, False)
-
-     async def async_generator(self):
-          with self.bool_attr("async_"):
-               yield "async"
-
-     def sync_generator(self):
-          yield "sync"
-
-     @asynccontextmanager
-     async def async_generator_with_context(self):
-          with self.bool_attr("async_ctx"):
-               yield "async_ctx"
-
-     @contextmanager
-     def sync_generator_with_context(self):
-          yield "sync_ctx"
+     async def __aenter__(self) -> Self:
+          self.flag = True
+          return self
+     
+     async def __aexit__(self, exc_type, exc, tb):
+          self.flag = False
                
-
-generators = Generators()
+     def __enter__(self) -> Self:
+          return self
+     
+     def __exit__(self, exc_type, exc, tb):
+          return None
+     
+     
+class SessionManager:
+     def __init__(self) -> None:
+          self.ctx = Session()
+          self.gen = Session()
+          
+     @asynccontextmanager
+     async def async_context(self):
+          async with self.ctx as session:
+               yield session
+               
+     async def async_generator(self):
+          async with self.gen as session:
+               yield session
+               
+     @contextmanager
+     def sync_context(self):
+          with self.ctx as session:
+               yield session
+               
+     def sync_generator(self):
+          with self.gen as session:
+               yield session
+     
+     
+@pytest.fixture(scope="function")
+def sessions() -> SessionManager:
+     return SessionManager()
      
      
 async def test_handler_async(
-     depend_resolver: DependResolver
+     my_dispatcher: MyDispatcher,
+     middleware_register: MiddlewareRegistryType,
+     sessions: SessionManager
 ) -> None:
-     async def handler_async(
-          data: Annotated[str, Depends(generators.async_generator)]
+     @my_dispatcher.message()
+     async def handle_async(
+          message: Message,
+          async_ctx: Annotated[Session, Depends(sessions.async_context)],
+          async_gen: Annotated[Session, Depends(sessions.async_generator)]
      ):
-          assert data == "async"
+          assert isinstance(message, Message)
+          assert async_ctx.flag is True
+          assert async_gen.flag is True
+          return "handle"
           
-     depend_resolver.handler_callback = handler_async
+     middleware_register(["message"])
+     handle_result = await my_dispatcher.message_update()
      
-     inject = await depend_resolver.resolve_callback_depends()
-     await handler_async(**inject)
-     await depend_resolver.stack.stack.aclose()
-     assert generators.async_ == False
+     assert handle_result == "handle"
+     assert sessions.ctx.flag is False
+     assert sessions.gen.flag is False
+     
      
 async def test_handler_sync(
-     depend_resolver: DependResolver
+     my_dispatcher: MyDispatcher,
+     middleware_register: MiddlewareRegistryType,
+     sessions: SessionManager,
 ) -> None:
-     async def handler_sync(
-          data: Annotated[str, Depends(generators.sync_generator)]
+     
+     @my_dispatcher.message(F.text == "sync_ctx")
+     async def handle_sync_ctx(
+          message: Message,
+          sync_ctx: Annotated[Session, Depends(sessions.sync_context)],
      ):
-          assert data == "sync"
+          ...
           
-     depend_resolver.handler_callback = handler_sync
+     @my_dispatcher.message(F.text == "sync_gen")
+     async def handle_sync_gen(
+          message: Message,
+          sync_gen: Annotated[Session, Depends(sessions.sync_generator)]
+     ):
+          ...
+          
+     middleware_register(["message"])
      with pytest.raises(ContextManagerError):
-          await depend_resolver.resolve_callback_depends()
+          await my_dispatcher.message_update(text="sync_ctx")
      
-async def test_handler_async_ctx(
-     depend_resolver: DependResolver
-) -> None:
-     async def handler_async_ctx(
-          data: Annotated[str, Depends(generators.async_generator_with_context)]
-     ):
-          assert data == "async_ctx"
-          
-     depend_resolver.handler_callback = handler_async_ctx
-     
-     inject = await depend_resolver.resolve_callback_depends()
-     await handler_async_ctx(**inject)
-     await depend_resolver.stack.stack.aclose()
-     assert generators.async_ctx == False
-     
-async def test_handler_sync_ctx(
-     depend_resolver: DependResolver
-) -> None:
-     async def handler_sync_ctx(
-          data: Annotated[str, Depends(generators.sync_generator_with_context)]
-     ):
-          assert data == "sync_ctx"
-          
-     depend_resolver.handler_callback = handler_sync_ctx
      with pytest.raises(ContextManagerError):
-          await depend_resolver.resolve_callback_depends()
+          await my_dispatcher.message_update(text="sync_gen")
      
