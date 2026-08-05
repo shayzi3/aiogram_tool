@@ -13,17 +13,11 @@ class RateLimitTool(BaseTool):
      
      def __init__(
           self,
-          storage: BaseLockStorage = MemoryLockStorage(),
-          answer_callback: RateLimitAnswer = RateLimitAnswer(),
+          storage: BaseLockStorage | None = None,
+          answer_callback: RateLimitAnswer | None = None
      ) -> None:
-          if not isinstance(storage, BaseLockStorage):
-               raise TypeError(f"Invalid type for storage {storage}")
-          
-          if not isinstance(answer_callback, RateLimitAnswer):
-               raise TypeError(f"Invalid type for answer_callback {answer_callback}")
-          
-          self.storage = storage
-          self.answer_callback = answer_callback
+          self.storage = storage or MemoryLockStorage()
+          self.answer_callback = answer_callback or RateLimitAnswer()
           
      def setup(self, dispatcher: Dispatcher) -> None:
           dispatcher.workflow_data["rate_limit"] = self

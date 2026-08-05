@@ -1,6 +1,6 @@
 [project]
 name = "aiogram-tool"
-version = "1.5.0"
+version = "1.2.2"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -11,6 +11,5 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "aiohttp-socks>=0.11.0",
     "pytest-asyncio>=1.4.0",
 ]

@@ -1,6 +1,4 @@
-test.py
-__pycache__
-venv
+__pycache__/
+.venv/
 dist/
-test_file.txt
 *_test.py

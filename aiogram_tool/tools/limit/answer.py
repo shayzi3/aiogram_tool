@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 from aiogram.types import TelegramObject
 
@@ -9,7 +9,9 @@ class RateLimitAnswer:
      async def __call__(
           self, 
           event: TelegramObject, 
-          time: timedelta, 
-          lost_time: datetime
+          window_time: timedelta, 
+          retry_after: timedelta
      ) -> None:
-          await event.answer(text=f"Next request {datetime.strftime("%d %B %A %H:%M:%S")}")
+          await event.answer(
+               text=f"Next request after {retry_after.total_seconds()} seconds."
+          )

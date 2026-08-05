@@ -17,57 +17,59 @@ class RateLimitFilter(Filter):
           self,
           rate_limit: BaseRateLimit,
           storage: BaseLockStorage | None = None,
-          answer_callback: RateLimitAnswer | None = None
+          answer_callback: RateLimitAnswer | None = None,
+          key: str | None = None,
+          all_users: bool = False
      ) -> None:
-          if (storage is not None) and not isinstance(storage, BaseLockStorage):
-               raise TypeError(f"Invalid type for storage {storage}")
-          
-          if (answer_callback is not None) and not isinstance(answer_callback, RateLimitAnswer):
-               raise TypeError(f"Invalid type for answer_callback {answer_callback}")
-          
-          if not isinstance(rate_limit, BaseRateLimit):
-               raise TypeError(f"Invalid type for rate_limit {rate_limit}")
-
           self.storage = storage
           self.answer_callback = answer_callback
           self.rate_limit = rate_limit
+          self.all_users = all_users
+          self.key = key
           
-     def get_rate_limit_tool(self, dispatcher: Dispatcher) -> RateLimitTool:
-          rate_limit_tool: RateLimitTool = dispatcher.workflow_data.get("rate_limit", None)
+     def get_rate_limit_tool(self, **kwargs) -> RateLimitTool:
+          dispatcher: Dispatcher = kwargs.get("dispatcher")
+          if dispatcher is None:
+               raise ValueError("Dispatcher not found")
+          
+          rate_limit_tool: RateLimitTool = dispatcher.workflow_data.get("rate_limit")
           if rate_limit_tool is None:
                raise ValueError("Not found RateLimitTool. Call setup function")
           return rate_limit_tool
      
-     def unique_handler_name(self, handler: HandlerObject) -> str:
-          callback = handler.callback
-          return getattr(callback, "__name__") + str(hash(callback))
+     def unique_handler_name(self, **kwargs) -> str:
+          handler: HandlerObject = kwargs.get("handler")
+          if handler is None:
+               raise ValueError("Handler not found")
           
-     async def __call__(
-          self, 
-          event: TelegramObject,
-          handler: HandlerObject,
-          dispatcher: Dispatcher
-     ) -> bool:
-          rate_limit_tool = self.get_rate_limit_tool(dispatcher)
+          callback = handler.callback
+          
+          module = getattr(callback, "__module__")
+          qualname = getattr(callback, "__qualname__")
+          return f"{module}.{qualname}"
+          
+     async def __call__(self, *args, **kwargs) -> bool:
+          event: TelegramObject = args[0]
+          rate_limit_tool = self.get_rate_limit_tool(**kwargs)
           
           storage = self.storage
           if storage is None:
-               if rate_limit_tool.storage is None:
-                    raise TypeError(f"Not found storage. Add storage instance in filter or tool")
                storage = rate_limit_tool.storage
                
           answer_callback = self.answer_callback
           if answer_callback is None:
                answer_callback = rate_limit_tool.answer_callback
                
-          key = self.rate_limit.build_key(
+          unique_key = self.rate_limit.build_key(
                event=event,
-               unique_handler_name=self.unique_handler_name(handler)
+               unique_handler_name=self.unique_handler_name(**kwargs),
+               all_users=self.all_users,
+               key=self.key
           )
           return await self.rate_limit.execute(
                event=event,
                storage=storage,
                answer_callback=answer_callback,
-               key=key
+               key=unique_key
           )
           

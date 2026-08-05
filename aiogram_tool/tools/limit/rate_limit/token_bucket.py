@@ -5,47 +5,39 @@ from aiogram.types import TelegramObject
 from aiogram_tool.storage.base import BaseLockStorage
 from aiogram_tool.tools.limit.schema import UserLimit
 from aiogram_tool.tools.limit.answer import RateLimitAnswer
+from aiogram_tool.types import _MISSING
 from .base import BaseRateLimit
 
 
 class TokenBucketRateLimit(BaseRateLimit):
+     storage_prefix = "token_bucket_aiot_rate_limit"
      
      def __init__(
           self,
           bucket_size: int,
           current_tokens: int,
-          refill_time: timedelta,
+          refill_time: timedelta = timedelta(seconds=1),
           refill_tokens: int = 1,
-          all_users: bool = False,
-          time_before_one_token: bool = True
-     ):
+          time_before_one_token: bool = True,
+     ) -> None:
           self.bucket_size = bucket_size
-          self.all_users = all_users
           self.current_tokens = current_tokens
           self.refill_rate = refill_tokens / refill_time.total_seconds()
           self.time_before_request = timedelta(
-               seconds=(1 if time_before_one_token else bucket_size) / self.refill_rate
+               seconds=(1 if time_before_one_token is True else bucket_size) / self.refill_rate
           )
      
      def count_new_tokens(
           self,
-          current_tokens: int,
+          current_tokens: float,
           current_time: datetime,
           last_time: datetime,
-          refill_rate: int,
+          refill_rate: float,
           bucket_size: int
-     ) -> int | float:
+     ) -> float:
           past_tense = (current_time - last_time).total_seconds()
           new_tokens = past_tense * refill_rate
           return min(bucket_size, current_tokens + new_tokens)
-     
-     def build_key(
-          self, 
-          event: TelegramObject, 
-          unique_handler_name: str
-     ) -> str:
-          user = str(event.from_user.id) if not self.all_users else "users"
-          return f"{self.storage_prefix}@{user}@{unique_handler_name}"
      
      async def execute(
           self,
@@ -59,7 +51,7 @@ class TokenBucketRateLimit(BaseRateLimit):
                current_time = datetime.now(tz=timezone.utc)
 
                bucket = await storage.get_value(key=key)
-               if bucket is None:
+               if bucket is _MISSING:
                     await storage.set_value(
                          key=key,
                          value=UserLimit(

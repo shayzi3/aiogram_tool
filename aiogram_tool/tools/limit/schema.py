@@ -27,13 +27,4 @@ class UserLimit:
           data = json.loads(obj)
           if not all(key in data for key in cls.__dataclass_fields__.keys()):
                raise ValueError("Invalid json for UserLimit")
-          
-          return cls(
-               requests=data["requests"],
-               time=data["time"]
-          )
-          
-     
-     def compare_time_ge(self, time: datetime) -> bool:
-          return time >= self.time
-     
+          return cls(**data)     

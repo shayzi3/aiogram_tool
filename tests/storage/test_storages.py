@@ -1,4 +1,5 @@
 import asyncio
+import secrets
 
 from aiogram_tool.storage.base import BaseLockStorage
 from aiogram_tool.types import _MISSING
@@ -8,12 +9,14 @@ from aiogram_tool.types import _MISSING
 async def test_storage(
      storage_lock: BaseLockStorage
 ) -> None:
-     value = await storage_lock.get_value(key="test_get_value")
+     storage_value = secrets.token_hex(50)
+     
+     value = await storage_lock.get_value(key=storage_value)
      assert value is _MISSING
      
-     await storage_lock.set_value(key="test_get_value", value="test_value")
+     await storage_lock.set_value(key=storage_value, value="test_value")
      
-     value = await storage_lock.get_value(key="test_get_value")
+     value = await storage_lock.get_value(key=storage_value)
      assert value == "test_value"
      
      async def increment() -> None:

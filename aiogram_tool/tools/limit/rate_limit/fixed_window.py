@@ -5,29 +5,21 @@ from aiogram.types import TelegramObject
 from aiogram_tool.storage.base import BaseLockStorage
 from aiogram_tool.tools.limit.schema import UserLimit
 from aiogram_tool.tools.limit.answer import RateLimitAnswer
+from aiogram_tool.types import _MISSING
 from .base import BaseRateLimit
 
 
 
 class FixedWindowRateLimit(BaseRateLimit):
+     storage_prefix = "fixed_aiot_rate_limit"
      
      def __init__(
           self,
           requests: int,
           time: timedelta,
-          all_users: bool = False
      ) -> None:
           self.requests = requests
           self.time = time
-          self.all_users = all_users
-          
-     def build_key(
-          self, 
-          event: TelegramObject, 
-          unique_handler_name: str
-     ) -> str:
-          user = str(event.from_user.id) if not self.all_users else "users"
-          return f"{self.storage_prefix}@{user}@{unique_handler_name}"
           
      async def execute(
           self,
@@ -39,8 +31,9 @@ class FixedWindowRateLimit(BaseRateLimit):
           lock = await storage.lock(key)
           async with lock:
                current_time = datetime.now(tz=timezone.utc)
+               
                raw_user_limit = await storage.get_value(key=key)
-               if raw_user_limit is None:
+               if raw_user_limit is _MISSING:
                     await storage.set_value(
                          key=key,
                          value=UserLimit(
@@ -51,7 +44,7 @@ class FixedWindowRateLimit(BaseRateLimit):
                     return True
 
                user_limit = UserLimit.from_json(raw_user_limit)
-               if user_limit.compare_time_ge(current_time):
+               if current_time >= user_limit.time:
                     await storage.set_value(
                          key=key,
                          value=UserLimit(
