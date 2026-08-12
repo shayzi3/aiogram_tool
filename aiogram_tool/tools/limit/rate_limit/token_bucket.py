@@ -18,17 +18,14 @@ class TokenBucketRateLimit(BaseRateLimit):
           current_tokens: int,
           refill_time: timedelta = timedelta(seconds=1),
           refill_tokens: int = 1,
-          time_before_one_token: bool = True,
      ) -> None:
           self.bucket_size = bucket_size
           self.current_tokens = current_tokens
           self.refill_rate = refill_tokens / refill_time.total_seconds()
-          self.time_before_request = timedelta(
-               seconds=(1 if time_before_one_token is True else bucket_size) / self.refill_rate
-          )
+          self.time_before_request = timedelta(seconds=1 / self.refill_rate)
      
+     @staticmethod
      def count_new_tokens(
-          self,
           current_tokens: float,
           current_time: datetime,
           last_time: datetime,

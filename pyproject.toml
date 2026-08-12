@@ -11,5 +11,6 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "aiohttp-socks>=0.11.0",
     "pytest-asyncio>=1.4.0",
 ]

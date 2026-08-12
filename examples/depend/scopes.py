@@ -1,51 +1,63 @@
 import asyncio
-import random
+import secrets
 
-from typing import Annotated
-
-from aiogram import Dispatcher, Bot
-from aiogram.types import Message
+from aiogram import Bot, Dispatcher
 from aiogram.filters import CommandStart
+from aiogram.types import Message
 
 from aiogram_tool.tools.depend import (
-    Depends,
-    setup_depend_tool,
-    Scope,
-    dependency_scope
+     DependTool,
+     Depends,
+     ScopeRegistry,
+     Scope,
 )
+from aiogram_tool.tools.setup import aiogram_tool_setup
 
 
-
-bot = Bot("TOKEN HERE")
+bot = Bot("YOUR_TOKEN_HERE")
 dp = Dispatcher()
 
+# Custom scope registry
+scope_registry = ScopeRegistry()
 
 
-class UserService:
-     def __init__(self):
-          self.number = random.randint(1, 10000)
+# SINGLETON scope: initialized once per app lifecycle
+@scope_registry(Scope.SINGLETON)
+async def get_app_config() -> str:
+     print("Initializing App Config...")
+     return "APP_CONFIG_V1"
 
 
-@dependency_scope(scope=Scope.APP)
-async def get_user_service():
-     return UserService()
+# REQUEST scope: initialized per update/request
+@scope_registry(Scope.REQUEST)
+async def get_request_id() -> int:
+     return secrets.randbits(20)
 
+
+# TRANSIENT scope: initialized every time it's called
+@scope_registry(Scope.TRANSIENT)
+async def get_message(req_id: str = Depends(get_request_id)) -> str:
+     if req_id % 2 != 0:
+          return "Odd seconds"
+     return "Even seconds"
 
 
 @dp.message(CommandStart())
-async def start(
-     message: Message,
-     service: Annotated[UserService, Depends(get_user_service)],
+async def start_handler(
+    message: Message,
+    config: str = Depends(get_app_config),
+    req_id: int = Depends(get_request_id),
+    request_id_message: str = Depends(get_message),
 ):
-     assert isinstance(service, UserService)
-     await message.answer(f"Number {service.number}")
-     
-     
-     
+     await message.answer(f"Config {config}. {req_id} {request_id_message}")
+
+
 async def main():
-     setup_depend_tool(dispatcher=dp)
+     depend_tool = DependTool(scope_registry=scope_registry)
+     aiogram_tool_setup(dp, [depend_tool])
+     
      await dp.start_polling(bot)
-     
-     
+
+
 if __name__ == "__main__":
      asyncio.run(main())
