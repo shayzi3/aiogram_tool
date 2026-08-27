@@ -18,6 +18,7 @@ from .exit import DependExit
 
 
 class DependFilter(Filter):
+     """This class allows invoking a dependency at the filter level."""
      
      def __init__(self, *dependencies: From) -> None:
           for dep in dependencies:

@@ -12,6 +12,7 @@ T = TypeVar("T")
 
 
 class ScopeRegistry:
+     """Registering scopes for dependencies"""
      
      def __init__(self):
           self.scopes: dict[Callable, Scope] = {}

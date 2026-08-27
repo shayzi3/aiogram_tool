@@ -18,6 +18,12 @@ class FixedWindowRateLimit(BaseRateLimit):
           requests: int,
           time: timedelta,
      ) -> None:
+          """Fixed time window
+
+          Args:
+              requests (int): count of requests
+              time (timedelta): window time
+          """
           if requests <= 0:
                raise ValueError("requests must be greater than 0")
           

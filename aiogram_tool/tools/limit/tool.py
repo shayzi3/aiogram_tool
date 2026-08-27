@@ -10,6 +10,7 @@ from aiogram_tool.tools.limit.answer import RateLimitAnswer
 
 
 class RateLimitTool(BaseTool):
+     """Tool for verifying the request limiter's functionality"""
      
      def __init__(
           self,

@@ -19,6 +19,14 @@ class TokenBucketRateLimit(BaseRateLimit):
           refill_time: timedelta = timedelta(seconds=1),
           refill_tokens: int = 1,
      ) -> None:
+          """Tocken bucket
+
+          Args:
+              bucket_size (int): maximum replenishable number of tokens
+              current_tokens (int, optional): initial number of tokens. Defaults to 1.
+              refill_time (timedelta, optional): time it takes for refill tokens to arrive. Defaults to timedelta(seconds=1).
+              refill_tokens (int, optional): number of tokens received during the refill time. Defaults to 1.
+          """
           if not all(
               [value > 0 for value in [bucket_size, current_tokens, refill_tokens]]
           ):

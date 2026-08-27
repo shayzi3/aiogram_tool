@@ -15,6 +15,7 @@ from .depend import From
 
 
 class DependTool(BaseTool):
+     """Class for register dependency middlewares"""
      
      def __init__(
           self,

@@ -12,6 +12,7 @@ from aiogram_tool.tools.limit.tool import RateLimitTool
 
 
 class RateLimitFilter(Filter):
+     """Class for request limits on the handler"""
      
      def __init__(
           self,
@@ -21,6 +22,15 @@ class RateLimitFilter(Filter):
           key: str | None = None,
           all_users: bool = False
      ) -> None:
+          """
+          Args:
+               rate_limit - type of request limiter
+               storage - custom storage for scpecific handler
+               answer_callback - custom callback for specific handler
+               key - Key for identifying the handler. By default, the handler name and module are used.
+               all_users - Limit for all users simultaneously
+
+          """
           self.storage = storage
           self.answer_callback = answer_callback
           self.rate_limit = rate_limit

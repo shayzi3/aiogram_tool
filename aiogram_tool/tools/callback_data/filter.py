@@ -81,6 +81,12 @@ class LongCallbackQueryFilter(CallbackQueryFilter):
      
      
 class LongCallbackData(CallbackData, prefix="?"):
+     """Class registering long callback data
+     
+     _storage - storage for long values\n
+     _answer_callback - A callback that triggers if the callback data for the button is not found in the storage.
+     """
+     
      _storage: ClassVar[BaseStorage] = MemoryStorage()
      _answer_callback: ClassVar[CallbackDataAnswer] = CallbackDataAnswer()
      
@@ -92,6 +98,13 @@ class LongCallbackData(CallbackData, prefix="?"):
           return self.__separator__.join(result)
      
      async def pack_long(self) -> str:
+          """A method that catches the long-data error
+
+          Returns:
+              str: A unique ID generated if a "long data" error was caught 
+               or resulting from the call to the parent `pack` method.
+          """
+          
           try:
                return super().pack()
           except ValueError as ex:

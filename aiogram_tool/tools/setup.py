@@ -16,6 +16,8 @@ def aiogram_tool_setup(
      dispatcher: Dispatcher,
      tools: Iterable[BaseTool],
 ) -> None:
+     """Main function for registering all tools"""
+     
      if not isinstance(dispatcher, Dispatcher):
           raise TypeError("Invalid type for dispatcher")
      

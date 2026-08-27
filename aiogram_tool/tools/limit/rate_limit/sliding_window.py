@@ -19,6 +19,12 @@ class SlidingWindowRateLimit(BaseRateLimit):
           requests: int,
           time: timedelta,
      ) -> None:
+          """Sliding time window
+          
+          Args:
+              requests (int): count of requests
+              time (timedelta): window time
+          """
           if requests <= 0:
                raise ValueError("requests must be greater than 0")
           

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 
 class DependInnerMiddleware(BaseMiddleware):
+     """Class that injects dependencies into the handler"""
      
      def __init__(self, depend_tool: "DependTool") -> None:
           self.depend_tool = depend_tool
