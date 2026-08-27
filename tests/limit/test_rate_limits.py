@@ -3,7 +3,7 @@ import pytest
 import secrets
 
 from datetime import timedelta
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator
 
 from aiogram.types import Message
 from aiogram.dispatcher.event.bases import UNHANDLED
@@ -270,4 +270,43 @@ async def test_redifinition_and_key_in_filter(
      
      assert local_value is not _MISSING
      
+     
+     
+@pytest.mark.parametrize(
+     argnames=("rate_limit_class", "data"),
+     argvalues=(
+          (
+               FixedWindowRateLimit,
+               [
+                    {"requests": 0, "time": timedelta(seconds=1)},
+                    {"requests": -5, "time": timedelta(seconds=1)}
+               ]
+          ),
+          (
+               SlidingWindowRateLimit,
+               [
+                    {"requests": 0, "time": timedelta(seconds=1)},
+                    {"requests": -5, "time": timedelta(seconds=1)}
+               ]
+          ),
+          (
+               TokenBucketRateLimit,
+               [
+                    {"bucket_size": 0},
+                    {"bucket_size": -5},
+                    {"current_tokens": 0, "bucket_size": 1},
+                    {"current_tokens": -5, "bucket_size": 0},
+                    {"refill_tokens": 0, "bucket_size": 0},
+                    {"refill_tokens": -5, "bucket_size": 0}
+               ]
+          )
+     )
+)
+async def test_limits_errors(
+     rate_limit_class: BaseRateLimit,
+     data: list[dict[str, Any]]
+) -> None:
+     for error_data in data:
+          with pytest.raises(ValueError):
+               rate_limit_class(**error_data)
      

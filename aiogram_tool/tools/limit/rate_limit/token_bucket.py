@@ -15,10 +15,18 @@ class TokenBucketRateLimit(BaseRateLimit):
      def __init__(
           self,
           bucket_size: int,
-          current_tokens: int,
+          current_tokens: int = 1,
           refill_time: timedelta = timedelta(seconds=1),
           refill_tokens: int = 1,
      ) -> None:
+          if not all(
+              [value > 0 for value in [bucket_size, current_tokens, refill_tokens]]
+          ):
+               raise ValueError(
+                    "args bucket_size, current_tokens, refill_tokens "
+                    "must be greater than 0"
+               )
+          
           self.bucket_size = bucket_size
           self.current_tokens = current_tokens
           self.refill_rate = refill_tokens / refill_time.total_seconds()

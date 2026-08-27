@@ -18,6 +18,9 @@ class FixedWindowRateLimit(BaseRateLimit):
           requests: int,
           time: timedelta,
      ) -> None:
+          if requests <= 0:
+               raise ValueError("requests must be greater than 0")
+          
           self.requests = requests
           self.time = time
           
