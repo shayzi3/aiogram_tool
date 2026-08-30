@@ -2,3 +2,4 @@ __pycache__/
 .venv/
 dist/
 *_test.py
+.pytest_cache/
