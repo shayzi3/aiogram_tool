@@ -1,16 +1,16 @@
 [project]
-name = "aiogram_tool"
-version = "1.2.1"
+name = "aiogram-tool"
+version = "1.2.2"
 description = "Tools which doing work with aiogram simple"
 authors = [
     {name = "Vlad_shayzi1",email = "tecnomega@mail.ru"}
-]
-license = "MIT"
+]   
 readme = "README.md"
-requires-python = ">=3.10"
+license = "MIT"
+requires-python = ">=3.11"
 dependencies = [
-    "aiogram (>=3.22.0,<4.0.0)",
-    "redis (>=6.4.0,<7.0.0)"
+    "aiogram==3.29.1",
+    "redis>=8.0.0",
 ]
 keywords = [
     "aiogram",
@@ -27,7 +27,31 @@ keywords = [
     "long"
 ]
 
+[project.urls]
+Repository = "https://github.com/shayzi3/aiogram_tool"
+Contributing = "https://github.com/shayzi3/aiogram_tool/blob/master/CONTRIBUTING.md"
+
+[dependency-groups]
+dev = [
+    "aiohttp-socks>=0.11.0",
+    "pre-commit>=4.6.2",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.5",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B", "UP"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["aiogram_tool.tools.depend.Depends", "aiogram_tool.tools.depend.depend.Depends"]
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
