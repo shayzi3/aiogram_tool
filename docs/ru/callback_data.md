@@ -208,4 +208,4 @@ class PersistentData(LongCallbackData, prefix="redis"):
 ```
 
 
-[Со всеми примерами кода можно ознакомиться здесь](examples/callback_data/)
+[Со всеми примерами кода можно ознакомиться здесь](https://github.com/shayzi3/aiogram_tool/tree/master/examples/callback_data)

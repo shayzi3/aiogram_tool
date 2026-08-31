@@ -389,4 +389,4 @@ aiogram_tool_setup(dp, [rate_limit_tool])
 > Фильтр получает `RateLimitTool` через диспетчер, который ищется в данных апдейта. При стандартном polling это работает автоматически. Если вы обрабатываете апдейты вручную (например, webhook через `feed_update`), передайте именованный аргумент `dispatcher=экземпляр класса Dispatcher`, иначе фильтр выбросит `ValueError("Dispatcher not found")`.
 
 
-[Со всеми примерами кода можно ознакомиться здесь](examples/limit/)
+[Со всеми примерами кода можно ознакомиться здесь](https://github.com/shayzi3/aiogram_tool/blob/master/examples/limit/)
