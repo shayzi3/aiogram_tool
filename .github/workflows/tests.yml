@@ -1,0 +1,55 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Внимание: Docker-сервисы (Redis) нативно поддерживаются только на Ubuntu
+        os: [ubuntu-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+
+    # Запуск Redis в Docker-контейнере
+    services:
+      redis:
+        image: redis:7-alpine
+        # Открываем порт 6379 контейнера на порт 6379 виртуальной машины GitHub
+        ports:
+          - 6379:6379
+        # Проверка готовности Redis перед стартом тестов
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        # Автоматически кэширует зависимости для ускорения повторных запусков
+        enable-cache: true
+
+    - name: Set up Python ${{ matrix.python-version }}
+      run: uv python pin ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      # Устанавливаем проект вместе с тестовыми зависимостями
+      run: uv sync --all-extras --dev
+
+    - name: Run tests with pytest
+      # Передаем адрес Redis через переменную окружения (если ваш код её использует)
+      env:
+        REDIS_URL: redis://localhost:6379
+      run: uv run pytest
