@@ -61,6 +61,7 @@ from aiogram_tool.tools.depend import Depends, DependTool, ScopeRegistry, Scope
 
 scope_registry = ScopeRegistry()
 
+
 class CounterService:
     def __init__(self) -> None:
         self.count = 0
@@ -69,11 +70,13 @@ class CounterService:
         self.count += 1
         return {"current_count": self.count}
 
+
 counter = CounterService()
 scope_registry.register(counter, Scope.REQUEST)
 
 # Pass the registry to the tool during setup
 aiogram_tool_setup(dp, [DependTool(scope_registry=scope_registry)])
+
 
 @dp.message(CommandStart())
 async def start_handler(message: Message, stats: dict = Depends(counter)):
@@ -96,6 +99,7 @@ Limit handler calls with three built-in algorithms:
 from datetime import timedelta
 from aiogram_tool.tools.limit import RateLimitTool, RateLimitFilter
 from aiogram_tool.tools.limit.rate_limit import SlidingWindowRateLimit
+
 
 @dp.message(
     Command("ping"),
@@ -133,18 +137,46 @@ Extras:
 Telegram limits `callback_data` to **64 bytes**. `LongCallbackData` automatically stores oversized payloads and restores them when the callback arrives — with the same familiar aiogram API.
 
 ```python
+from aiogram import Bot, Dispatcher, F
+from aiogram.filters import CommandStart
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 from aiogram_tool.tools.callback_data import LongCallbackData
+
+bot = Bot("YOUR_TOKEN_HERE")
+dp = Dispatcher()
+
 
 class MyData(LongCallbackData, prefix="mydata"):
     mode: str
     payload: str
 
-# Short data is packed as usual; long data is stored transparently
-callback_data = await MyData(mode="long", payload="A" * 200).pack_long()
+
+@dp.message(CommandStart())
+async def start_handler(message: Message):
+    # Short data is packed as usual; long data is stored transparently
+    short_cb = await MyData(mode="short", payload="Hello!").pack_long()
+    long_cb = await MyData(mode="long", payload="A" * 200).pack_long()
+
+    await message.answer(
+        "Choose an action:",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="Short data", callback_data=short_cb)],
+                [InlineKeyboardButton(text="Long data", callback_data=long_cb)],
+            ]
+        ),
+    )
+
 
 # Filter exactly like standard aiogram CallbackData
 @dp.callback_query(MyData.filter(F.mode == "long"))
 async def handler(query: CallbackQuery, callback_data: MyData):
+    # Original data is fully available despite the 64-byte limit
     await query.answer(text=f"Received: {callback_data.payload}")
 ```
 
@@ -153,6 +185,7 @@ By default data is kept in in-memory storage. Use Redis to persist it across res
 ```python
 from redis.asyncio import Redis as AsyncRedis
 from aiogram_tool.storage import AsyncRedisLockStorage
+
 
 class PersistentData(LongCallbackData, prefix="redis"):
     _storage = AsyncRedisLockStorage(redis=AsyncRedis(), expire=3600)

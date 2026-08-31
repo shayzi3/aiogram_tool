@@ -49,10 +49,7 @@ dp = Dispatcher()
     # Лимит: 3 запроса в 10 секунд на пользователя
     Command("ping"),
     RateLimitFilter(
-        rate_limit=FixedWindowRateLimit(
-            requests=3,
-            time=timedelta(seconds=10)
-        )
+        rate_limit=FixedWindowRateLimit(requests=3, time=timedelta(seconds=10))
     ),
 )
 async def ping_handler(message: Message):
@@ -79,12 +76,7 @@ if __name__ == "__main__":
 Простой алгоритм: окно открывается с первого запроса и закрывается через `time`. Внутри окна разрешено не более `requests` запросов, после чего до конца окна все запросы отклоняются. По истечении окна счётчик сбрасывается.
 
 ```python
-RateLimitFilter(
-    rate_limit=FixedWindowRateLimit(
-        requests=5,
-        time=timedelta(seconds=60)
-    )
-)
+RateLimitFilter(rate_limit=FixedWindowRateLimit(requests=5, time=timedelta(seconds=60)))
 ```
 
 > [!TIP]
@@ -96,10 +88,7 @@ RateLimitFilter(
 
 ```python
 RateLimitFilter(
-    rate_limit=SlidingWindowRateLimit(
-        requests=5,
-        time=timedelta(seconds=60)
-    )
+    rate_limit=SlidingWindowRateLimit(requests=5, time=timedelta(seconds=60))
 )
 ```
 
@@ -110,10 +99,10 @@ RateLimitFilter(
 ```python
 RateLimitFilter(
     rate_limit=TokenBucketRateLimit(
-        bucket_size=5,                     # максимальное число токенов
-        current_tokens=5,                  # начальное число токенов
+        bucket_size=5,  # максимальное число токенов
+        current_tokens=5,  # начальное число токенов
         refill_time=timedelta(seconds=5),  # интервал пополнения
-        refill_tokens=1                    # +1 токен каждые 5 секунд
+        refill_tokens=1,  # +1 токен каждые 5 секунд
     )
 )
 ```
@@ -134,12 +123,9 @@ RateLimitFilter(
 @dp.message(
     Command("start"),
     RateLimitFilter(
-        rate_limit=SlidingWindowRateLimit(
-            requests=10,
-            time=timedelta(minutes=1)
-        ),
-        all_users=True,     # лимит общий для всех
-        key="global_start"  # свой ключ вместо имени обработчика
+        rate_limit=SlidingWindowRateLimit(requests=10, time=timedelta(minutes=1)),
+        all_users=True,  # лимит общий для всех
+        key="global_start",  # свой ключ вместо имени обработчика
     ),
 )
 async def start_handler(message: Message):
@@ -160,10 +146,7 @@ from aiogram_tool.tools.limit import RateLimitAnswer
 
 class CustomLimitAnswer(RateLimitAnswer):
     async def __call__(
-        self,
-        event: TelegramObject,
-        window_time: timedelta,
-        retry_after: timedelta
+        self, event: TelegramObject, window_time: timedelta, retry_after: timedelta
     ) -> None:
         await event.answer(
             text=f"🚫 Слишком часто! Повторите через {retry_after.total_seconds():.1f} сек."
@@ -197,13 +180,10 @@ from aiogram_tool.storage import AsyncRedisLockStorage
 @dp.message(
     Command("secret"),
     RateLimitFilter(
-        rate_limit=SlidingWindowRateLimit(
-            requests=2,
-            time=timedelta(seconds=30)
-        ),
+        rate_limit=SlidingWindowRateLimit(requests=2, time=timedelta(seconds=30)),
         storage=AsyncRedisLockStorage(redis=AsyncRedis()),  # своё хранилище
-        answer_callback=RateLimitAnswer(),                  # свой ответ
-        key="secret_cmd"                                    # свой ключ
+        answer_callback=RateLimitAnswer(),  # свой ответ
+        key="secret_cmd",  # свой ключ
     ),
 )
 async def secret_handler(message: Message):
@@ -226,9 +206,7 @@ from redis.asyncio import Redis as AsyncRedis
 from aiogram_tool.storage import AsyncRedisLockStorage
 
 
-rate_limit_tool = RateLimitTool(
-    storage=AsyncRedisLockStorage(redis=AsyncRedis())
-)
+rate_limit_tool = RateLimitTool(storage=AsyncRedisLockStorage(redis=AsyncRedis()))
 aiogram_tool_setup(dp, [rate_limit_tool])
 ```
 

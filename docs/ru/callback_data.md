@@ -52,7 +52,12 @@ Telegram ограничивает размер атрибута `callback_data` 
 ```python
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
-from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 from aiogram_tool.tools.callback_data import LongCallbackData
 
 bot = Bot("YOUR_TOKEN_HERE")
@@ -75,10 +80,12 @@ async def start_handler(message: Message):
 
     await message.answer(
         "Выберите действие:",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Короткие данные", callback_data=short_cb)],
-            [InlineKeyboardButton(text="Длинные данные", callback_data=long_cb)],
-        ]),
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="Короткие данные", callback_data=short_cb)],
+                [InlineKeyboardButton(text="Длинные данные", callback_data=long_cb)],
+            ]
+        ),
     )
 
 
@@ -199,6 +206,7 @@ redis_storage = AsyncRedisLockStorage(
     redis=AsyncRedis(host="localhost", port=6379, decode_responses=True),
     expire=3600,
 )
+
 
 class PersistentData(LongCallbackData, prefix="redis"):
     _storage = redis_storage

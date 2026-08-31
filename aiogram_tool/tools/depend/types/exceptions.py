@@ -1,20 +1,25 @@
-
-
-
 class DependencyOverrideError(Exception): ...
 
+
 class ObserverError(Exception): ...
-     
+
+
 class CallableError(Exception): ...
+
 
 class DependRecursionError(Exception): ...
 
+
 class UnsupportedParameterKindError(Exception): ...
+
 
 class InvalidMiddlewareDataArgumentError(Exception): ...
 
+
 class ContextManagerError(Exception): ...
 
+
 class InvalidDependencyError(Exception): ...
+
 
 class NotFoundDependTool(Exception): ...

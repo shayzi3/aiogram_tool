@@ -1,5 +1,1 @@
-
-
-
-class _MISSING:
-     ...
+class _MISSING: ...

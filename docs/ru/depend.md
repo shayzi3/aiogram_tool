@@ -56,8 +56,7 @@ if __name__ == "__main__":
 
 ```python
 @dp.message(CommandStart())
-async def start_handler(message: Message, name: str = Depends(get_user_name)):
-    ...
+async def start_handler(message: Message, name: str = Depends(get_user_name)): ...
 ```
 
 **2. Через `Annotated`:**
@@ -70,8 +69,7 @@ from typing import Annotated
 async def start_handler(
     message: Message,
     name: Annotated[str, Depends(get_user_name)],
-):
-    ...
+): ...
 ```
 
 ## Поддерживаемые типы зависимостей
@@ -206,8 +204,7 @@ scope_registry.register(some_func, Scope.TRANSIENT)
 async def start_handler(
     message: Message,
     config: str = Depends(get_app_config, scope=Scope.SINGLETON),
-):
-    ...
+): ...
 ```
 
 > [!TIP]
@@ -267,7 +264,7 @@ async def verify_user_access(context: Message) -> None:
 @dp.message(CommandStart())
 async def start_handler(
     message: Message,
-    _ = Depends(verify_user_access),
+    _=Depends(verify_user_access),
 ):
     await message.answer("Welcome admin!")
 ```

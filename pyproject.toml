@@ -12,5 +12,20 @@ dependencies = [
 [dependency-groups]
 dev = [
     "aiohttp-socks>=0.11.0",
+    "pre-commit>=4.6.2",
     "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.5",
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B", "UP"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["aiogram_tool.tools.depend.Depends", "aiogram_tool.tools.depend.depend.Depends"]

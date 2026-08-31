@@ -49,10 +49,7 @@ dp = Dispatcher()
     # Limit: 3 requests per 10 seconds per user
     Command("ping"),
     RateLimitFilter(
-        rate_limit=FixedWindowRateLimit(
-            requests=3,
-            time=timedelta(seconds=10)
-        )
+        rate_limit=FixedWindowRateLimit(requests=3, time=timedelta(seconds=10))
     ),
 )
 async def ping_handler(message: Message):
@@ -79,12 +76,7 @@ if __name__ == "__main__":
 A simple algorithm: the window opens with the first request and closes after `time`. Within the window, no more than `requests` requests are allowed, after which all requests are rejected until the end of the window. When the window expires, the counter is reset.
 
 ```python
-RateLimitFilter(
-    rate_limit=FixedWindowRateLimit(
-        requests=5,
-        time=timedelta(seconds=60)
-    )
-)
+RateLimitFilter(rate_limit=FixedWindowRateLimit(requests=5, time=timedelta(seconds=60)))
 ```
 
 > [!TIP]
@@ -96,10 +88,7 @@ Stores timestamps of recent requests and takes into account only those that fall
 
 ```python
 RateLimitFilter(
-    rate_limit=SlidingWindowRateLimit(
-        requests=5,
-        time=timedelta(seconds=60)
-    )
+    rate_limit=SlidingWindowRateLimit(requests=5, time=timedelta(seconds=60))
 )
 ```
 
@@ -110,10 +99,10 @@ The classic token bucket algorithm: tokens accumulate in the "bucket" (no more t
 ```python
 RateLimitFilter(
     rate_limit=TokenBucketRateLimit(
-        bucket_size=5,                     # maximum number of tokens
-        current_tokens=5,                  # initial number of tokens
+        bucket_size=5,  # maximum number of tokens
+        current_tokens=5,  # initial number of tokens
         refill_time=timedelta(seconds=5),  # refill interval
-        refill_tokens=1                    # +1 token every 5 seconds
+        refill_tokens=1,  # +1 token every 5 seconds
     )
 )
 ```
@@ -134,12 +123,9 @@ By default, the limit applies **to each user separately** (`user_id` is included
 @dp.message(
     Command("start"),
     RateLimitFilter(
-        rate_limit=SlidingWindowRateLimit(
-            requests=10,
-            time=timedelta(minutes=1)
-        ),
-        all_users=True,     # the limit is shared for everyone
-        key="global_start"  # custom key instead of the handler name
+        rate_limit=SlidingWindowRateLimit(requests=10, time=timedelta(minutes=1)),
+        all_users=True,  # the limit is shared for everyone
+        key="global_start",  # custom key instead of the handler name
     ),
 )
 async def start_handler(message: Message):
@@ -160,10 +146,7 @@ from aiogram_tool.tools.limit import RateLimitAnswer
 
 class CustomLimitAnswer(RateLimitAnswer):
     async def __call__(
-        self,
-        event: TelegramObject,
-        window_time: timedelta,
-        retry_after: timedelta
+        self, event: TelegramObject, window_time: timedelta, retry_after: timedelta
     ) -> None:
         await event.answer(
             text=f"🚫 Too many requests! Try again in {retry_after.total_seconds():.1f} sec."
@@ -197,13 +180,10 @@ from aiogram_tool.storage import AsyncRedisLockStorage
 @dp.message(
     Command("secret"),
     RateLimitFilter(
-        rate_limit=SlidingWindowRateLimit(
-            requests=2,
-            time=timedelta(seconds=30)
-        ),
+        rate_limit=SlidingWindowRateLimit(requests=2, time=timedelta(seconds=30)),
         storage=AsyncRedisLockStorage(redis=AsyncRedis()),  # own storage
-        answer_callback=RateLimitAnswer(),                  # own response
-        key="secret_cmd"                                    # own key
+        answer_callback=RateLimitAnswer(),  # own response
+        key="secret_cmd",  # own key
     ),
 )
 async def secret_handler(message: Message):
@@ -226,9 +206,7 @@ from redis.asyncio import Redis as AsyncRedis
 from aiogram_tool.storage import AsyncRedisLockStorage
 
 
-rate_limit_tool = RateLimitTool(
-    storage=AsyncRedisLockStorage(redis=AsyncRedis())
-)
+rate_limit_tool = RateLimitTool(storage=AsyncRedisLockStorage(redis=AsyncRedis()))
 aiogram_tool_setup(dp, [rate_limit_tool])
 ```
 
