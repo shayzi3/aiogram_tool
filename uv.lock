@@ -35,7 +35,7 @@ wheels = [
 [[package]]
 name = "aiogram-tool"
 version = "1.2.2"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "aiogram" },
     { name = "redis" },
