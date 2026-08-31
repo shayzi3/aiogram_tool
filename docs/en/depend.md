@@ -397,4 +397,4 @@ async def start_handler(message: Message):
 | `NotFoundDependTool` | `DependFilter` is used without a registered `DependTool` |
 
 
-[All code examples can be found here](https://github.com/shayzi3/aiogram_tool/blob/master/examples/depend/)
+[All code examples can be found here](examples/depend/)

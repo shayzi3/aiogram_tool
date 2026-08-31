@@ -390,4 +390,4 @@ aiogram_tool_setup(dp, [rate_limit_tool])
 > The filter gets `RateLimitTool` through the dispatcher, which is searched for in the update data. With standard polling, this works automatically. If you process updates manually (for example, a webhook via `feed_update`), pass the keyword argument `dispatcher=instance of the Dispatcher class`, otherwise the filter will raise `ValueError("Dispatcher not found")`.
 
 
-[All code examples can be found here](https://github.com/shayzi3/aiogram_tool/blob/master/examples/limit/)
+[All code examples can be found here](examples/limit/)
