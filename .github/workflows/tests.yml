@@ -37,7 +37,7 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@v10
       with:
         # Автоматически кэширует зависимости для ускорения повторных запусков
         enable-cache: true
