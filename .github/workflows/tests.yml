@@ -37,7 +37,8 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v10
+      # У setup-uv начиная с v8 нет мажорных тегов (v8, v9, v10) — только полные версии
+      uses: astral-sh/setup-uv@v10.0.1
       with:
         # Автоматически кэширует зависимости для ускорения повторных запусков
         enable-cache: true
