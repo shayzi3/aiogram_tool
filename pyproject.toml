@@ -1,6 +1,6 @@
 [project]
 name = "aiogram-tool"
-version = "1.2.2"
+version = "1.2.3"
 description = "Tools which doing work with aiogram simple"
 authors = [
     {name = "Vlad_shayzi1",email = "tecnomega@mail.ru"}
