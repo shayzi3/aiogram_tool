@@ -13,7 +13,7 @@ from aiogram_tool.tools.depend import (
 )
 from aiogram_tool.tools.setup import aiogram_tool_setup
 
-bot = Bot("YOUR_TOKEN_HERE")
+bot = Bot("123456:TEST-PLACEHOLDER-TOKEN")
 dp = Dispatcher()
 
 # Custom scope registry

@@ -12,7 +12,7 @@ from aiogram.types import (
 # Import LongCallbackData
 from aiogram_tool.tools.callback_data import LongCallbackData
 
-bot = Bot("YOUR_TOKEN_HERE")
+bot = Bot("123456:TEST-PLACEHOLDER-TOKEN")
 dp = Dispatcher()
 
 

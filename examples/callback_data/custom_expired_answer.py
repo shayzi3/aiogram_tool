@@ -15,7 +15,7 @@ from aiogram_tool.storage.impl.memory import MemoryLockStorage
 # Import base answer class
 from aiogram_tool.tools.callback_data import CallbackDataAnswer, LongCallbackData
 
-bot = Bot("YOUR_TOKEN_HERE")
+bot = Bot("123456:TEST-PLACEHOLDER-TOKEN")
 dp = Dispatcher()
 
 
