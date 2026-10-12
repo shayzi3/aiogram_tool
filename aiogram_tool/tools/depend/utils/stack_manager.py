@@ -13,7 +13,7 @@ class AsyncExitStackTransaction:
         return self
 
     async def __aexit__(self, *args) -> None:
-        await self.stack.aclose()
+        await self.stack.__aexit__(*args)
 
     def _get_stack(self, scope: Scope) -> AsyncExitStack:
         return self.app_stack if scope == Scope.SINGLETON else self.stack

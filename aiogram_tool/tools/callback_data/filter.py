@@ -20,9 +20,14 @@ class _UniqueIDCallbackData(CallbackData, prefix=UNIQUE_PREFIX):
 
     @classmethod
     def build(cls, callback_data: type[CallbackData]) -> Self:
-        separators_len = len(cls.__separator__) * len(cls.model_fields)
+        separators_len = len(cls.__separator__.encode("utf-8")) * len(cls.model_fields)
         unique_id_len = (
-            64 - (len(UNIQUE_PREFIX) + len(callback_data.__prefix__) + separators_len)
+            64
+            - (
+                len(UNIQUE_PREFIX.encode("utf-8"))
+                + len(callback_data.__prefix__.encode("utf-8"))
+                + separators_len
+            )
         ) // 2
 
         if unique_id_len < 6:
