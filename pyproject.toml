@@ -1,6 +1,6 @@
 [project]
 name = "aiogram-tool"
-version = "1.2.4"
+version = "1.2.5"
 description = "Tools which doing work with aiogram simple"
 authors = [
     {name = "Vlad_shayzi1",email = "tecnomega@mail.ru"}
@@ -9,7 +9,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
-    "aiogram==3.29.1",
+    "aiogram>=3.29.1,<4.0.0",
     "redis>=8.0.0",
 ]
 keywords = [
