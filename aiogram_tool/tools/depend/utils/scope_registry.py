@@ -4,7 +4,7 @@ from typing import ParamSpec, TypeVar
 from aiogram_tool.tools.depend.depend import From
 from aiogram_tool.tools.depend.types.enums import Scope
 from aiogram_tool.tools.depend.types.schema import ScopeObject
-from aiogram_tool.types import _MISSING
+from aiogram_tool.types import _MISSING, _MissingType
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -13,7 +13,7 @@ T = TypeVar("T")
 class ScopeRegistry:
     """Registering scopes for dependencies"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.scopes: dict[Callable, Scope] = {}
 
     def register(self, obj: Callable, scope: Scope) -> None:
@@ -26,17 +26,17 @@ class ScopeRegistry:
 
         return wrapper
 
-    def get_scope(self, obj: Callable) -> Scope | _MISSING:
+    def get_scope(self, obj: Callable) -> Scope | _MissingType:
         return self.scopes.get(obj, _MISSING)
 
     def get_scope_object(self, depend: From) -> ScopeObject:
         scope = Scope.TRANSIENT
 
         registry_scope = self.get_scope(depend.depend)
-        if registry_scope is not _MISSING:
+        if isinstance(registry_scope, Scope):
             scope = registry_scope
 
-        if depend.scope is not _MISSING:
+        if isinstance(depend.scope, Scope):
             scope = depend.scope
 
         return ScopeObject(depend=depend.depend, scope=scope)

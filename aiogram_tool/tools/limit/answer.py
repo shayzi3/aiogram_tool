@@ -15,6 +15,6 @@ class RateLimitAnswer:
             window_time (timedelta): time specified at the handler level
             retry_after (timedelta): time until the next request
         """
-        await event.answer(
+        await event.answer(  # type: ignore[attr-defined]
             text=f"Next request after {retry_after.total_seconds()} seconds."
         )

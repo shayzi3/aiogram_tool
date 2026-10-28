@@ -7,13 +7,8 @@ from aiogram_tool.tools.depend.types.exceptions import (
     DependencyOverrideError,
     ObserverError,
 )
-from aiogram_tool.tools.depend.utils.registry_manager import (
-    DependRegistryTransactionManager,
-)
+from aiogram_tool.tools.depend.utils.container_manager import ContainerManager
 from aiogram_tool.tools.depend.utils.scope_registry import ScopeRegistry
-from aiogram_tool.tools.depend.utils.stack_manager import (
-    AsyncExitStackTransactionManager,
-)
 from aiogram_tool.tools.setup import BaseTool
 
 from .components.inner_middleware import DependInnerMiddleware
@@ -42,29 +37,29 @@ class DependTool(BaseTool):
                 if error_msg is not None:
                     raise DependencyOverrideError(error_msg)
 
-        self.dependency_override = dependency_override or {}
         self.allowed_updates = allowed_updates
-        self.scope_registry = scope_registry or ScopeRegistry()
-        self.registry = DependRegistryTransactionManager()
-        self.stack_manager = AsyncExitStackTransactionManager()
+        self.container_manager = ContainerManager(
+            scope_registry=scope_registry, dependency_override=dependency_override
+        )
 
     async def shutdown(self) -> None:
-        await self.stack_manager.stack.aclose()
+        await self.container_manager.shutdown()
 
     def setup(self, dispatcher: Dispatcher) -> None:
         dispatcher.shutdown.register(self.shutdown)
-        dispatcher.workflow_data["depend_tool"] = self
 
         updates = (
             self.allowed_updates
             if self.allowed_updates is not None
             else dispatcher.resolve_used_update_types()
         )
-        inner_middleware = DependInnerMiddleware(depend_tool=self)
-        outer_middleware = DependOuterMiddleware(depend_tool=self)
+        inner_middleware = DependInnerMiddleware()
+        outer_middleware = DependOuterMiddleware(
+            container_manager=self.container_manager
+        )
 
         for update in updates:
-            observer: TelegramEventObserver = dispatcher.observers.get(update, None)
+            observer: TelegramEventObserver | None = dispatcher.observers.get(update)
             if observer is None:
                 raise ObserverError(f"Invalid observer {update}")
 

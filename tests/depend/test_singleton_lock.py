@@ -13,7 +13,7 @@ async def test_singleton_lock(
     my_dispatcher: MyDispatcher,
     middleware_register: MiddlewareRegistryType,
 ) -> None:
-    depend_tool.scope_registry = scope_registry
+    depend_tool.container_manager.scope_registry = scope_registry
 
     class Test: ...
 

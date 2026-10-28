@@ -30,14 +30,18 @@ def test_depend_tool(depend_tool: DependTool, dispatcher: Dispatcher) -> None:
     @dispatcher.callback_query()
     async def test_query_handler(query: CallbackQuery): ...
 
-    assert isinstance(depend_tool.dependency_override, dict)
+    assert isinstance(depend_tool.container_manager.dependency_override, dict)
     assert (
         isinstance(depend_tool.allowed_updates, list)
         or depend_tool.allowed_updates is None
     )
-    assert isinstance(depend_tool.scope_registry, ScopeRegistry)
-    assert isinstance(depend_tool.registry, DependRegistryTransactionManager)
-    assert isinstance(depend_tool.stack_manager, AsyncExitStackTransactionManager)
+    assert isinstance(depend_tool.container_manager.scope_registry, ScopeRegistry)
+    assert isinstance(
+        depend_tool.container_manager.registry, DependRegistryTransactionManager
+    )
+    assert isinstance(
+        depend_tool.container_manager.stack_manager, AsyncExitStackTransactionManager
+    )
 
     depend_tool.setup(dispatcher=dispatcher)
 

@@ -56,8 +56,14 @@ await dp.start_polling(bot)
 Inject dependencies into handlers via default argument values — no middleware boilerplate required.
 
 ```python
+from aiogram import Bot, Dispatcher
+from aiogram.filters import CommandStart
+from aiogram.types import Message
 from aiogram_tool.tools.setup import aiogram_tool_setup
 from aiogram_tool.tools.depend import Depends, DependTool, ScopeRegistry, Scope
+
+bot = Bot("YOUR_TOKEN_HERE")
+dp = Dispatcher()
 
 scope_registry = ScopeRegistry()
 
@@ -88,6 +94,7 @@ Highlights:
 - Works with functions, class-functors, and `__init__` methods
 - Scopes: `SINGLETON`, `REQUEST`, `TRANSIENT` (via `ScopeRegistry`)
 - Nested dependencies (`subdepends`), `From` extractor, `DependFilter`, and `DependExit`
+- Call dependencies manually from middleware via `data["resolver"]` and `resolver.resolve()`
 
 📖 Full documentation: [EN](docs/en/depend.md) | [RU](docs/ru/depend.md)
 

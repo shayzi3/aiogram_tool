@@ -1,5 +1,5 @@
 import secrets
-from typing import Any, ClassVar, Self
+from typing import Any, ClassVar, Literal, Self, cast
 
 from aiogram.filters.callback_data import CallbackData, CallbackQueryFilter
 from aiogram.types import CallbackQuery
@@ -8,7 +8,7 @@ from magic_filter import MagicFilter
 from aiogram_tool.storage.base import BaseStorage
 from aiogram_tool.storage.impl.memory import MemoryStorage
 from aiogram_tool.tools.callback_data.answer import CallbackDataAnswer
-from aiogram_tool.types import _MISSING
+from aiogram_tool.types import _MissingType
 
 UNIQUE_PREFIX: str = "UIDPR"
 STORAGE_PREFIX: str = "aiot_callback_data"
@@ -46,10 +46,11 @@ class _UniqueIDCallbackData(CallbackData, prefix=UNIQUE_PREFIX):
 
 
 class LongCallbackQueryFilter(CallbackQueryFilter):
-    async def __call__(self, query: CallbackQuery) -> bool | dict[str, Any]:
+    async def __call__(self, query: CallbackQuery) -> Literal[False] | dict[str, Any]:
         if not isinstance(query, CallbackQuery) or not query.data:
             return False
 
+        instance: CallbackData
         try:
             instance = _UniqueIDCallbackData.unpack(query.data)
         except (TypeError, ValueError):
@@ -62,13 +63,14 @@ class LongCallbackQueryFilter(CallbackQueryFilter):
             if instance.callback_data_prefix != self.callback_data.__prefix__:
                 return False
 
-            storage: BaseStorage = self.callback_data._storage
-            answer_callback: CallbackDataAnswer = self.callback_data._answer_callback
+            callback_data = cast(type[LongCallbackData], self.callback_data)
+            storage: BaseStorage = callback_data._storage
+            answer_callback: CallbackDataAnswer = callback_data._answer_callback
 
             packed_callback_data = await storage.get_value(
                 key=instance.get_storage_key()
             )
-            if packed_callback_data is _MISSING:
+            if isinstance(packed_callback_data, _MissingType):
                 await answer_callback(query)
                 return False
             try:

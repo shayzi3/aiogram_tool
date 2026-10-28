@@ -1,31 +1,25 @@
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from aiogram.types.base import TelegramObject
 
-from aiogram_tool.tools.depend.utils.registry_manager import DependRegistryTransaction
-from aiogram_tool.tools.depend.utils.resolver import DependResolver
-from aiogram_tool.tools.depend.utils.stack_manager import AsyncExitStackTransaction
+from aiogram_tool.tools.depend.utils.resolver import Resolver
 
 from .exit import DependExit
-
-if TYPE_CHECKING:
-    from aiogram_tool.tools.depend.tool import DependTool
 
 
 class DependInnerMiddleware(BaseMiddleware):
     """Class that injects dependencies into the handler"""
 
-    def __init__(self, depend_tool: "DependTool") -> None:
-        self.depend_tool = depend_tool
+    def _get_resolver(self, data: dict[str, Any]) -> Resolver:
+        if "resolver" not in data:
+            raise ValueError("Resolver not found in data")
+        return data["resolver"]
 
-    def get_transactions(
-        self, data: dict[str, Any]
-    ) -> tuple[DependRegistryTransaction, AsyncExitStackTransaction]:
-        return data.get("request_registry"), data.get("request_stack")
-
-    def get_handler_callback(self, data: dict[str, Any]) -> Callable:
+    def _get_handler_callback(self, data: dict[str, Any]) -> Callable:
+        if "handler" not in data:
+            raise ValueError("Handler not found in data")
         return data["handler"].callback
 
     async def __call__(
@@ -34,19 +28,11 @@ class DependInnerMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: dict[str, Any],
     ) -> Any:
-        handler_callback = self.get_handler_callback(data)
-        req_registry, req_stack = self.get_transactions(data)
-
-        resolver = DependResolver(
-            dependency_override=self.depend_tool.dependency_override,
-            scope_registry=self.depend_tool.scope_registry,
-            handler_callback=handler_callback,
-            registry=req_registry,
-            stack=req_stack,
-            middleware_data=data.copy(),
-        )
+        resolver = self._get_resolver(data)
         try:
-            inject_params = await resolver.resolve_callback_depends()
+            inject_params = await resolver.resolve_handler(
+                handler=self._get_handler_callback(data)
+            )
         except DependExit:
             return
 

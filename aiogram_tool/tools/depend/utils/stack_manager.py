@@ -1,5 +1,5 @@
 from contextlib import AbstractAsyncContextManager, AsyncExitStack
-from typing import Any, Self
+from typing import Any
 
 from aiogram_tool.tools.depend.types.enums import Scope
 
@@ -9,10 +9,7 @@ class AsyncExitStackTransaction:
         self.app_stack = app_stack
         self.stack = AsyncExitStack()
 
-    async def __aenter__(self) -> Self:
-        return self
-
-    async def __aexit__(self, *args) -> None:
+    async def close(self, *args) -> None:
         await self.stack.__aexit__(*args)
 
     def _get_stack(self, scope: Scope) -> AsyncExitStack:

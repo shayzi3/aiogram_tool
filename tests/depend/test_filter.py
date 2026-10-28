@@ -47,7 +47,7 @@ async def test_depend_filter(
         return "handle"
 
     middleware_register(["message"])
-    depend_tool.scope_registry = scope_registry
+    depend_tool.container_manager.scope_registry = scope_registry
     my_dispatcher.workflow_data["depend_tool"] = depend_tool
     handle_result = await my_dispatcher.message_update(
         text="Hello", dispatcher=my_dispatcher

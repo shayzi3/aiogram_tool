@@ -4,7 +4,7 @@ from redis.asyncio import Redis as AsyncRedis
 from redis.asyncio.lock import Lock as RedisLock
 
 from aiogram_tool.storage.base import BaseLockStorage, BaseStorage
-from aiogram_tool.types import _MISSING
+from aiogram_tool.types import _MISSING, _MissingType
 
 
 class AsyncRedisStorage(BaseStorage):
@@ -12,7 +12,7 @@ class AsyncRedisStorage(BaseStorage):
         self.redis = redis
         self.expire = expire
 
-    async def get_value(self, key: str) -> str | _MISSING:
+    async def get_value(self, key: str) -> str | _MissingType:
         value = await self.redis.get(name=key)
         if value is not None:
             return value.decode() if isinstance(value, bytes) else value

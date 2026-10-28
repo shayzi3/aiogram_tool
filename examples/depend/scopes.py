@@ -35,7 +35,7 @@ async def get_request_id() -> int:
 
 # TRANSIENT scope: initialized every time it's called
 @scope_registry(Scope.TRANSIENT)
-async def get_message(req_id: str = Depends(get_request_id)) -> str:
+async def get_message(req_id: int = Depends(get_request_id)) -> str:
     if req_id % 2 != 0:
         return "Odd seconds"
     return "Even seconds"

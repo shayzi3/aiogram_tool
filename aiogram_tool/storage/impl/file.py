@@ -6,7 +6,7 @@ import aiofiles
 
 from aiogram_tool.storage.base import BaseLockStorage
 from aiogram_tool.storage.impl.memory import MemoryStorage
-from aiogram_tool.types import _MISSING
+from aiogram_tool.types import _MISSING, _MissingType
 
 
 class FileStorage(MemoryStorage):
@@ -31,7 +31,7 @@ class FileStorage(MemoryStorage):
         if self._is_memory:
             await super().set_value(key=key, value=value)
 
-    async def get_value(self, key: str) -> str | _MISSING:
+    async def get_value(self, key: str) -> str | _MissingType:
         if self._is_memory:
             value = await super().get_value(key=key)
             if value:

@@ -2,14 +2,14 @@ from asyncio import Lock
 from collections.abc import Callable, MutableMapping
 from typing import Any
 
-from aiogram_tool.types import _MISSING
+from aiogram_tool.types import _MISSING, _MissingType
 
 
 class DependencyMemoryStorage:
     def __init__(self) -> None:
         self.storage: MutableMapping = {}
 
-    async def get_value(self, key: Callable) -> Any | _MISSING:
+    async def get_value(self, key: Callable) -> Any | _MissingType:
         return self.storage.get(key, _MISSING)
 
     async def set_value(self, key: Callable, value: Any) -> None:
@@ -17,7 +17,7 @@ class DependencyMemoryStorage:
 
 
 class DependencyMemoryLockStorage(DependencyMemoryStorage):
-    def __init__(self):
+    def __init__(self) -> None:
         self.global_lock = Lock()
         self.locks: MutableMapping = {}
         super().__init__()

@@ -1,14 +1,15 @@
 [project]
 name = "aiogram-tool"
-version = "1.2.5"
+version = "1.2.6"
 description = "Tools which doing work with aiogram simple"
 authors = [
     {name = "Vlad_shayzi1",email = "tecnomega@mail.ru"}
-]   
+]
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
+    "aiofiles>=25.1.0",
     "aiogram>=3.29.1,<4.0.0",
     "redis>=8.0.0",
 ]
@@ -34,9 +35,11 @@ Contributing = "https://github.com/shayzi3/aiogram_tool/blob/master/CONTRIBUTING
 [dependency-groups]
 dev = [
     "aiohttp-socks>=0.11.0",
+    "mypy>=2.4.0",
     "pre-commit>=4.6.2",
     "pytest-asyncio>=1.4.0",
     "ruff>=0.16.5",
+    "types-aiofiles>=25.1.0.20260518",
 ]
 
 [tool.ruff]

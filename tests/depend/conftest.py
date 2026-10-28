@@ -20,8 +20,10 @@ class MyDispatcher(Dispatcher):
     ) -> None:
         for observer in observers:
             ins_observer = self.observers.get(observer)
-            ins_observer.outer_middleware(DependOuterMiddleware(depend_tool))
-            ins_observer.middleware(DependInnerMiddleware(depend_tool))
+            ins_observer.outer_middleware(
+                DependOuterMiddleware(depend_tool.container_manager)
+            )
+            ins_observer.middleware(DependInnerMiddleware())
 
     async def message_update(self, text: str | None = None, **middleware_data) -> Any:
         return await self.feed_update(

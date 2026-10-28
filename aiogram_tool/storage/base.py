@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from contextlib import AbstractAsyncContextManager
 
-from aiogram_tool.types import _MISSING
+from aiogram_tool.types import _MissingType
 
 
 class BaseStorage(ABC):
@@ -10,7 +10,7 @@ class BaseStorage(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_value(self, key: str) -> str | _MISSING:
+    async def get_value(self, key: str) -> str | _MissingType:
         raise NotImplementedError
 
 
