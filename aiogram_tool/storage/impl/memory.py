@@ -2,7 +2,7 @@ from asyncio import Lock
 from collections.abc import MutableMapping
 
 from aiogram_tool.storage.base import BaseLockStorage, BaseStorage
-from aiogram_tool.types import _MISSING
+from aiogram_tool.types import _MISSING, _MissingType
 
 
 class MemoryStorage(BaseStorage):
@@ -12,7 +12,7 @@ class MemoryStorage(BaseStorage):
     async def set_value(self, key: str, value: str) -> None:
         self.storage[key] = value
 
-    async def get_value(self, key: str) -> str | _MISSING:
+    async def get_value(self, key: str) -> str | _MissingType:
         return self.storage.get(key, _MISSING)
 
 

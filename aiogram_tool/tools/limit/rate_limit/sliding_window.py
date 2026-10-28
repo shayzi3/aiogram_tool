@@ -5,7 +5,7 @@ from aiogram.types import TelegramObject
 
 from aiogram_tool.storage.base import BaseLockStorage
 from aiogram_tool.tools.limit.answer import RateLimitAnswer
-from aiogram_tool.types import _MISSING
+from aiogram_tool.types import _MissingType
 
 from .base import BaseRateLimit
 
@@ -42,7 +42,7 @@ class SlidingWindowRateLimit(BaseRateLimit):
             current_time = datetime.now(tz=UTC)
 
             times = await storage.get_value(key=key)
-            if times is _MISSING:
+            if isinstance(times, _MissingType):
                 await storage.set_value(
                     key=key,
                     value=json.dumps([current_time.isoformat()]),

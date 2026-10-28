@@ -35,7 +35,7 @@ async def test_override_depends(
         assert test_depend.attr == "test_override"
         return "handle"
 
-    depend_tool.dependency_override = {
+    depend_tool.container_manager.dependency_override = {
         depend: Depends(override_depend),
         TestDepend: Depends(TestDependOverride),
     }

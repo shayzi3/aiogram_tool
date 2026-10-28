@@ -87,7 +87,7 @@ async def test_singleton_scope(
         return "handle"
 
     middleware_register(["message"])
-    depend_tool.scope_registry = scope_registry
+    depend_tool.container_manager.scope_registry = scope_registry
     handle_result = await gather(*[my_dispatcher.message_update() for _ in range(2)])
     assert handle_result == ["handle", "handle"]
     assert len(instance_manager.instances) == 1
@@ -116,7 +116,7 @@ async def test_singleton_scope_generator(
         return "handle"
 
     middleware_register(["message"])
-    depend_tool.scope_registry = scope_registry
+    depend_tool.container_manager.scope_registry = scope_registry
     handle_result = await gather(*[my_dispatcher.message_update() for _ in range(2)])
     assert handle_result == ["handle", "handle"]
     assert len(session_manager.sessions) == 1
@@ -151,7 +151,7 @@ async def test_request_scope(
         return "handle"
 
     middleware_register(["message"])
-    depend_tool.scope_registry = scope_registry
+    depend_tool.container_manager.scope_registry = scope_registry
     handle_result = await gather(*[my_dispatcher.message_update() for _ in range(2)])
     assert handle_result == ["handle", "handle"]
     assert len(instance_manager.instances) == 2
@@ -186,7 +186,7 @@ async def test_request_scope_generator(
         return "handle"
 
     middleware_register(["message"])
-    depend_tool.scope_registry = scope_registry
+    depend_tool.container_manager.scope_registry = scope_registry
     handle_result = await gather(*[my_dispatcher.message_update() for _ in range(2)])
     assert handle_result == ["handle", "handle"]
     assert len(session_manager.sessions) == 2
@@ -221,7 +221,7 @@ async def test_transient_scope(
         return "handle"
 
     middleware_register(["message"])
-    depend_tool.scope_registry = scope_registry
+    depend_tool.container_manager.scope_registry = scope_registry
     handle_result = await gather(*[my_dispatcher.message_update() for _ in range(2)])
     assert handle_result == ["handle", "handle"]
     assert len(instance_manager.instances) == 4
@@ -256,7 +256,7 @@ async def test_transient_scope_generator(
         return "handle"
 
     middleware_register(["message"])
-    depend_tool.scope_registry = scope_registry
+    depend_tool.container_manager.scope_registry = scope_registry
     handle_result = await gather(*[my_dispatcher.message_update() for _ in range(2)])
     assert handle_result == ["handle", "handle"]
     assert len(session_manager.sessions) == 4

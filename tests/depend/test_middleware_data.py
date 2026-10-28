@@ -6,6 +6,7 @@ from aiogram.types import Message
 from aiogram_tool.tools.depend.depend import Depends
 from aiogram_tool.tools.depend.types.exceptions import (
     InvalidMiddlewareDataArgumentError,
+    UnsupportedParameterKindError,
 )
 
 from .conftest import MiddlewareRegistryType, MyDispatcher
@@ -71,3 +72,18 @@ async def test_default_argument(
     handle_result = await my_dispatcher.message_update(data="other")
 
     assert handle_result == "other_handle"
+
+
+async def test_unsupported_parameter_kind(
+    my_dispatcher: MyDispatcher, middleware_register: MiddlewareRegistryType
+) -> None:
+    async def depend(value: int, /) -> int:
+        return value
+
+    @my_dispatcher.message()
+    async def handle(message: Message, value: Annotated[int, Depends(depend)]) -> int:
+        return value
+
+    middleware_register(["message"])
+    with pytest.raises(UnsupportedParameterKindError):
+        await my_dispatcher.message_update(value=1)

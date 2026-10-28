@@ -36,17 +36,19 @@ class RateLimitFilter(Filter):
         self.key = key
 
     def get_rate_limit_tool(self, **kwargs) -> RateLimitTool:
-        dispatcher: Dispatcher = kwargs.get("dispatcher")
+        dispatcher: Dispatcher | None = kwargs.get("dispatcher")
         if dispatcher is None:
             raise ValueError("Dispatcher not found")
 
-        rate_limit_tool: RateLimitTool = dispatcher.workflow_data.get("rate_limit")
+        rate_limit_tool: RateLimitTool | None = dispatcher.workflow_data.get(
+            "rate_limit"
+        )
         if rate_limit_tool is None:
             raise ValueError("Not found RateLimitTool. Call setup function")
         return rate_limit_tool
 
     def unique_handler_name(self, **kwargs) -> str:
-        handler: HandlerObject = kwargs.get("handler")
+        handler: HandlerObject | None = kwargs.get("handler")
         if handler is None:
             raise ValueError("Handler not found")
 

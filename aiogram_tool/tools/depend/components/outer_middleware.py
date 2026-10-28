@@ -1,16 +1,16 @@
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from aiogram.types import TelegramObject
 
-if TYPE_CHECKING:
-    from aiogram_tool.tools.depend.tool import DependTool
+from aiogram_tool.tools.depend.utils.container_manager import ContainerManager
+from aiogram_tool.tools.depend.utils.resolver import Resolver
 
 
 class DependOuterMiddleware(BaseMiddleware):
-    def __init__(self, depend_tool: "DependTool") -> None:
-        self.depend_tool = depend_tool
+    def __init__(self, container_manager: ContainerManager) -> None:
+        self.container_manager = container_manager
 
     async def __call__(
         self,
@@ -19,9 +19,8 @@ class DependOuterMiddleware(BaseMiddleware):
         data: dict[str, Any],
     ) -> Any:
         data["context"] = event
-        async with self.depend_tool.registry.transaction() as req_registry:
-            async with self.depend_tool.stack_manager.transaction() as req_stack:
-                data.update(
-                    {"request_registry": req_registry, "request_stack": req_stack}
-                )
-                return await handler(event, data)
+        async with self.container_manager.transaction() as container_transaction:
+            data["resolver"] = Resolver(
+                container_transaction=container_transaction, middleware_data=data.copy()
+            )
+            return await handler(event, data)

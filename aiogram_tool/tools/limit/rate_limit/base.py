@@ -16,11 +16,12 @@ class BaseRateLimit(ABC):
         all_users: bool,
         key: str | None,
     ) -> str:
-        if not getattr(event, "from_user", None):
+        from_user = getattr(event, "from_user", None)
+        if not from_user:
             raise TypeError(
                 f"Don't support event without attribute 'from_user'. Your event {event}"
             )
-        user = "users" if all_users is True else str(event.from_user.id)
+        user = "users" if all_users is True else str(from_user.id)
         last_part = key if key is not None else unique_handler_name
 
         return f"{self.storage_prefix}@{user}@{last_part}"

@@ -7,8 +7,10 @@ It supports functions, classes, class-functors, async generators (context manage
 ## How does it work?
 
 - `DependTool` registers two middlewares for each update type: `DependOuterMiddleware` and `DependInnerMiddleware`.
-- `DependOuterMiddleware` creates a "transaction" for each request: a dependency registry (`request_registry`) and a stack of context managers (`request_stack`). It also adds the `context` argument to `data` — the current event (`TelegramObject`).
-- `DependInnerMiddleware`, before calling the handler, parses its function signature and substitutes the results of dependencies for arguments marked with `Depends(...)`.
+- `DependOuterMiddleware` opens a container transaction (`ContainerManager.transaction()`) for each update and adds two arguments to `data`:
+  - `context` — the current event (`TelegramObject`);
+  - `resolver` — a `Resolver` instance through which dependencies are resolved.
+- `DependInnerMiddleware`, before calling the handler, parses its function signature and substitutes the results of dependencies for arguments marked with `Depends(...)` (internally it uses `resolver.resolve_handler`).
 
 ## Quick start
 
@@ -286,7 +288,70 @@ async def start_handler(message: Message):
 ```
 
 > [!CAUTION]
-> `DependFilter` requires a registered `DependTool` (it is looked up in `dispatcher.workflow_data`), otherwise a `NotFoundDependTool` will be raised.
+> `DependFilter` takes the `Resolver` from `data["resolver"]`, so `DependTool` must be registered via `aiogram_tool_setup`. If the resolver is not in `data`, a `ValueError` will be raised.
+
+## Calling a dependency in middleware
+
+The `Resolver` is available in `data["resolver"]`, so a dependency can be resolved manually — for example, to run something before the handler is invoked and reuse the result:
+
+```python
+from collections.abc import Awaitable, Callable
+from typing import Any
+
+from aiogram.dispatcher.middlewares.base import BaseMiddleware
+from aiogram.types import Message, TelegramObject
+
+from aiogram_tool.tools.depend import Scope, ScopeRegistry
+from aiogram_tool.tools.depend.utils.resolver import Resolver
+
+scope_registry = ScopeRegistry()
+
+
+class UserSession:
+    def __init__(self, user_id: int) -> None:
+        self.user_id = user_id
+
+
+@scope_registry(Scope.REQUEST)
+async def get_user_session(context: Message) -> UserSession:
+    return UserSession(user_id=context.from_user.id)
+
+
+class LoadUserSessionMiddleware(BaseMiddleware):
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: dict[str, Any],
+    ) -> Any:
+        resolver: Resolver = data["resolver"]
+        data["user_session"] = await resolver.resolve(get_user_session)
+        return await handler(event, data)
+```
+
+Important notes:
+
+- The `Resolver` is created by `DependOuterMiddleware`, so register your middleware **after** `aiogram_tool_setup`.
+- A scope can be passed to `resolve` as the second argument: `await resolver.resolve(get_user_session, scope=Scope.REQUEST)`.
+- The cache is shared: a `Scope.REQUEST` dependency resolved in middleware will return the same object in the handler if it is marked there as `Depends(get_user_session)`.
+
+> [!CAUTION]
+> If a dependency raises `DependExit`, `resolve()` does **not** catch it — the exception escapes from `resolve` into your middleware. `DependInnerMiddleware` catches `DependExit` only during automatic injection via `Depends` (the handler is simply not called), and `DependFilter` returns `False`. Therefore, catch the exception explicitly in your own middleware:
+
+```python
+from aiogram_tool.tools.depend import DependExit
+
+
+class VerifyAccessMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event, data) -> Any:
+        resolver: Resolver = data["resolver"]
+        try:
+            await resolver.resolve(verify_user_access)
+        except DependExit:
+            # The dependency requested cancellation — don't call the handler
+            return
+        return await handler(event, data)
+```
 
 ## API reference
 
@@ -307,9 +372,10 @@ async def start_handler(message: Message):
         allowed_updates: list[str] - (default None)
         scope_registry: ScopeRegistry - (default None)
 
-    The dependency injection tool. When setup is called, it registers
-    outer/inner middlewares for each update type and stores itself
-    in dispatcher.workflow_data["depend_tool"].
+    The dependency injection tool. When setup is called, it creates a
+    ContainerManager (scope_registry, dependency_override) and registers
+    outer/inner middlewares for each update type, plus a shutdown hook
+    that closes SINGLETON dependencies that are context managers.
 
     Argument documentation:
 
@@ -321,6 +387,42 @@ async def start_handler(message: Message):
     are taken (resolve_used_update_types).
 
     3. scope_registry — the scope registry. By default, an empty ScopeRegistry is created.
+
+
+`class: Resolver`
+
+    arguments:
+        container_transaction: ContainerTransaction - (created by DependOuterMiddleware)
+        middleware_data: dict[str, Any] - (the update data)
+
+    Resolves dependencies. It is created by DependOuterMiddleware for each
+    update and is available in data["resolver"] — both from middleware
+    and from DependFilter.
+
+    Methods:
+        resolve(func: Callable, scope: Scope = _MISSING) - resolves a dependency
+            and returns its result. Can be called from user middleware.
+            DependExit is not caught.
+        resolve_handler(handler: Callable) - substitutes into the handler's
+            arguments the results of only those dependencies marked with
+            Depends(...) (used by DependInnerMiddleware).
+
+
+`class: ContainerManager`
+
+    arguments:
+        scope_registry: ScopeRegistry - (default None)
+        dependency_override: dict[Callable, From] - (default None)
+
+    The dependency container manager: it stores the per-scope cache registry,
+    the stack of context managers, the ScopeRegistry, and dependency_override.
+    DependTool creates it automatically. It is useful when DI is used without
+    an aiogram dispatcher (for example, in tests).
+
+    Methods:
+        transaction() - opens a ContainerTransaction (async context manager),
+            during which dependencies are resolved
+        shutdown() - closes context managers opened with the SINGLETON scope
 
 
 `function: Depends`
@@ -391,7 +493,6 @@ async def start_handler(message: Message):
 | `DependRecursionError` | A cyclic dependency chain is detected |
 | `ContextManagerError` | A sync generator or sync context manager is used |
 | `InvalidDependencyError` | An object that is not `From` is passed to `DependFilter` |
-| `NotFoundDependTool` | `DependFilter` is used without a registered `DependTool` |
 
 
 [All code examples can be found here](https://github.com/shayzi3/aiogram_tool/blob/master/examples/depend/)
