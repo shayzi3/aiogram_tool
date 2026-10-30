@@ -325,14 +325,19 @@ class LoadUserSessionMiddleware(BaseMiddleware):
         data: dict[str, Any],
     ) -> Any:
         resolver: Resolver = data["resolver"]
-        data["user_session"] = await resolver.resolve(get_user_session)
+        # Pass the current `data` explicitly: since v1.2.7 middleware_data
+        # is not stored on the Resolver itself
+        data["user_session"] = await resolver.resolve(
+            get_user_session, middleware_data=data
+        )
         return await handler(event, data)
 ```
 
 Important notes:
 
 - The `Resolver` is created by `DependOuterMiddleware`, so register your middleware **after** `aiogram_tool_setup`.
-- A scope can be passed to `resolve` as the second argument: `await resolver.resolve(get_user_session, scope=Scope.REQUEST)`.
+- Since v1.2.7, `middleware_data` is passed to `resolve` / `resolve_handler` **per call** instead of being stored in the `Resolver` constructor. Pass your current `data` dict (by reference rather than a copy) — dependencies will see both what is already in `data` and values added in-place by middlewares registered after `aiogram_tool_setup`. If `middleware_data` is omitted, an empty dict is used.
+- A scope can be passed to `resolve`: `await resolver.resolve(get_user_session, scope=Scope.REQUEST)`.
 - The cache is shared: a `Scope.REQUEST` dependency resolved in middleware will return the same object in the handler if it is marked there as `Depends(get_user_session)`.
 
 > [!CAUTION]
@@ -346,7 +351,7 @@ class VerifyAccessMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data) -> Any:
         resolver: Resolver = data["resolver"]
         try:
-            await resolver.resolve(verify_user_access)
+            await resolver.resolve(verify_user_access, middleware_data=data)
         except DependExit:
             # The dependency requested cancellation — don't call the handler
             return
@@ -393,19 +398,27 @@ class VerifyAccessMiddleware(BaseMiddleware):
 
     arguments:
         container_transaction: ContainerTransaction - (created by DependOuterMiddleware)
-        middleware_data: dict[str, Any] - (the update data)
 
     Resolves dependencies. It is created by DependOuterMiddleware for each
     update and is available in data["resolver"] — both from middleware
     and from DependFilter.
 
     Methods:
-        resolve(func: Callable, scope: Scope = _MISSING) - resolves a dependency
-            and returns its result. Can be called from user middleware.
-            DependExit is not caught.
-        resolve_handler(handler: Callable) - substitutes into the handler's
-            arguments the results of only those dependencies marked with
-            Depends(...) (used by DependInnerMiddleware).
+        resolve(func: Callable, scope: Scope = _MISSING,
+                middleware_data: dict[str, Any] | None = None) - resolves a
+            dependency and returns its result. Can be called from user
+            middleware. DependExit is not caught.
+        resolve_handler(handler: Callable,
+                middleware_data: dict[str, Any] | None = None) - substitutes
+            into the handler's arguments the results of only those
+            dependencies marked with Depends(...)
+            (used by DependInnerMiddleware).
+
+    Since v1.2.7, middleware_data is not stored on the Resolver — pass it
+    explicitly in each call. If omitted, an empty dict is used and arguments
+    taken from middleware_data will not be available. Prefer passing your
+    current `data` dict (by reference): then dependencies will also see the
+    values that middlewares registered after aiogram_tool_setup put into it.
 
 
 `class: ContainerManager`

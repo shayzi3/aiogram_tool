@@ -325,14 +325,19 @@ class LoadUserSessionMiddleware(BaseMiddleware):
         data: dict[str, Any],
     ) -> Any:
         resolver: Resolver = data["resolver"]
-        data["user_session"] = await resolver.resolve(get_user_session)
+        # Передавайте текущий `data` явно: с v1.2.7 middleware_data
+        # не хранится в самом Resolver
+        data["user_session"] = await resolver.resolve(
+            get_user_session, middleware_data=data
+        )
         return await handler(event, data)
 ```
 
 Важные моменты:
 
 - `Resolver` создаётся `DependOuterMiddleware`, поэтому свой middleware регистрируйте **после** `aiogram_tool_setup`.
-- В `resolve` можно передать scope вторым аргументом: `await resolver.resolve(get_user_session, scope=Scope.REQUEST)`.
+- Начиная с v1.2.7, `middleware_data` передаётся в `resolve` / `resolve_handler` **при каждом вызове**, а не хранится в конструкторе `Resolver`. Передавайте актуальный `data` (сам словарь, а не копию) — зависимости увидят и то, что уже лежит в `data`, и значения, добавленные по месту middleware, зарегистрированными **после** `aiogram_tool_setup`. Если `middleware_data` не передана — используется пустой словарь.
+- В `resolve` можно передать scope: `await resolver.resolve(get_user_session, scope=Scope.REQUEST)`.
 - Кэш общий: зависимость со `Scope.REQUEST`, разрешённая в middleware, вернёт тот же объект в обработчике, если там указано `Depends(get_user_session)`.
 
 > [!CAUTION]
@@ -346,7 +351,7 @@ class VerifyAccessMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data) -> Any:
         resolver: Resolver = data["resolver"]
         try:
-            await resolver.resolve(verify_user_access)
+            await resolver.resolve(verify_user_access, middleware_data=data)
         except DependExit:
             # Зависимость запросила отмену — не вызываем обработчик
             return
@@ -393,18 +398,27 @@ class VerifyAccessMiddleware(BaseMiddleware):
 
     arguments:
         container_transaction: ContainerTransaction - (создаётся DependOuterMiddleware)
-        middleware_data: dict[str, Any] - (данные апдейта)
 
     Разрешает зависимости. Создаётся DependOuterMiddleware на каждый апдейт
     и доступен в data["resolver"] — как из middleware, так и из DependFilter.
 
     Методы:
-        resolve(func: Callable, scope: Scope = _MISSING) - разрешает зависимость
-            и возвращает её результат. Можно вызывать из пользовательских
-            middleware. DependExit не перехватывается.
-        resolve_handler(handler: Callable) - подставляет в аргументы обработчика
-            результаты только зависимостей, помеченных Depends(...)
+        resolve(func: Callable, scope: Scope = _MISSING,
+                middleware_data: dict[str, Any] | None = None) - разрешает
+            зависимость и возвращает её результат. Можно вызывать из
+            пользовательских middleware. DependExit не перехватывается.
+        resolve_handler(handler: Callable,
+                middleware_data: dict[str, Any] | None = None) - подставляет
+            в аргументы обработчика результаты только зависимостей,
+            помеченных Depends(...)
             (используется DependInnerMiddleware).
+
+    С v1.2.7 middleware_data не хранится в Resolver — передавайте её явно
+    при каждом вызове. Если не передать — будет использован пустой словарь,
+    и аргументы, берущиеся из middleware_data, окажутся недоступны.
+    Предпочтительно передавать актуальный `data` (сам словарь): тогда
+    зависимости также увидят значения, которые middleware, зарегистрированные
+    после aiogram_tool_setup, положили в него.
 
 
 `class: ContainerManager`

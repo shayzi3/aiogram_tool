@@ -36,9 +36,13 @@ class LoadUserSessionMiddleware(BaseMiddleware):
         data: dict[str, Any],
     ) -> Any:
         # Resolver is created by DependOuterMiddleware, so this middleware
-        # must be registered after aiogram_tool_setup
+        # must be registered after aiogram_tool_setup.
+        # Since v1.2.7 middleware_data is passed per call — pass the
+        # current `data` so the dependency can read middleware arguments
         resolver: Resolver = data["resolver"]
-        data["user_session"] = await resolver.resolve(get_user_session)
+        data["user_session"] = await resolver.resolve(
+            get_user_session, middleware_data=data
+        )
         return await handler(event, data)
 
 

@@ -94,7 +94,7 @@ Highlights:
 - Works with functions, class-functors, and `__init__` methods
 - Scopes: `SINGLETON`, `REQUEST`, `TRANSIENT` (via `ScopeRegistry`)
 - Nested dependencies (`subdepends`), `From` extractor, `DependFilter`, and `DependExit`
-- Call dependencies manually from middleware via `data["resolver"]` and `resolver.resolve()`
+- Call dependencies manually from middleware via `data["resolver"]` and `resolver.resolve(...)`, passing the current `data` as `middleware_data`
 
 📖 Full documentation: [EN](docs/en/depend.md) | [RU](docs/ru/depend.md)
 
