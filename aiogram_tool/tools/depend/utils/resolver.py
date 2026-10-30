@@ -29,31 +29,41 @@ _UNSUPPORTED_KINDS = (
 
 
 class Resolver:
-    def __init__(
-        self,
-        container_transaction: ContainerTransaction,
-        middleware_data: dict[str, Any],
-    ) -> None:
+    def __init__(self, container_transaction: ContainerTransaction) -> None:
         self.container_transaction = container_transaction
-        self.middleware_data = middleware_data
 
-    async def resolve_handler(self, handler: Callable[..., T]) -> dict[str, Any]:
-        return await self.build_kwargs(handler, only_depend=True)
+    async def resolve_handler(
+        self, handler: Callable[..., T], middleware_data: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        return await self.build_kwargs(
+            func=handler, only_depend=True, middleware_data=middleware_data
+        )
 
     async def resolve(
-        self, func: Callable[..., T], scope: Scope | _MissingType = _MISSING
+        self,
+        func: Callable[..., T],
+        scope: Scope | _MissingType = _MISSING,
+        middleware_data: dict[str, Any] | None = None,
     ) -> T:
-        return await self._get_depend(From(depend=func, scope=scope), chain=())
+        return await self._get_depend(
+            depend=From(depend=func, scope=scope),
+            chain=(),
+            middleware_data=middleware_data,
+        )
 
     async def build_kwargs(
         self,
         func: Callable,
         chain: tuple[Callable, ...] = (),
         only_depend: bool = False,
+        middleware_data: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        if middleware_data is None:
+            middleware_data = {}
+
         kwargs: dict[str, Any] = {}
         for argument in get_arguments(func):
-            if argument.depend is not None or argument.name in self.middleware_data:
+            if argument.depend is not None or argument.name in middleware_data:
                 if argument.kind in _UNSUPPORTED_KINDS:
                     raise UnsupportedParameterKindError(
                         f"Unsupported parameter kind {argument.kind} in {func},"
@@ -61,16 +71,25 @@ class Resolver:
                     )
 
             if argument.depend is not None:
-                kwargs[argument.name] = await self._get_depend(argument.depend, chain)
-            elif argument.name in self.middleware_data and only_depend is False:
-                kwargs[argument.name] = self.middleware_data[argument.name]
+                kwargs[argument.name] = await self._get_depend(
+                    depend=argument.depend,
+                    chain=chain,
+                    middleware_data=middleware_data,
+                )
+            elif argument.name in middleware_data and only_depend is False:
+                kwargs[argument.name] = middleware_data[argument.name]
             elif argument.default is inspect.Parameter.empty and only_depend is False:
                 raise InvalidMiddlewareDataArgumentError(
                     f"Argument {argument.name} of {func} not found in middleware data"
                 )
         return kwargs
 
-    async def _get_depend(self, depend: From, chain: tuple[Callable, ...]) -> Any:
+    async def _get_depend(
+        self,
+        depend: From,
+        chain: tuple[Callable, ...],
+        middleware_data: dict[str, Any] | None = None,
+    ) -> Any:
         depend = self.container_transaction.manager.dependency_override.get(
             depend.depend, depend
         )
@@ -81,7 +100,9 @@ class Resolver:
             raise DependRecursionError(f"Recursion detected: {scope_object.depend}")
 
         kwargs = await self.build_kwargs(
-            scope_object.depend, (*chain, scope_object.depend)
+            func=scope_object.depend,
+            chain=(*chain, scope_object.depend),
+            middleware_data=middleware_data,
         )
 
         registry = self.container_transaction.registry_transaction
