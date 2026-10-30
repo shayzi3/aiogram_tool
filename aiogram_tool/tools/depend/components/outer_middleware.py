@@ -20,7 +20,5 @@ class DependOuterMiddleware(BaseMiddleware):
     ) -> Any:
         data["context"] = event
         async with self.container_manager.transaction() as container_transaction:
-            data["resolver"] = Resolver(
-                container_transaction=container_transaction, middleware_data=data.copy()
-            )
+            data["resolver"] = Resolver(container_transaction=container_transaction)
             return await handler(event, data)

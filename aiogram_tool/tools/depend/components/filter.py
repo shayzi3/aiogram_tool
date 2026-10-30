@@ -28,7 +28,9 @@ class DependFilter(Filter):
         resolver = self.get_resolver(kwargs)
         for depend in self._dependencies:
             try:
-                await resolver.resolve(func=depend.depend, scope=depend.scope)
+                await resolver.resolve(
+                    func=depend.depend, scope=depend.scope, middleware_data=kwargs
+                )
             except DependExit:
                 return False
         return True

@@ -31,7 +31,7 @@ class DependInnerMiddleware(BaseMiddleware):
         resolver = self._get_resolver(data)
         try:
             inject_params = await resolver.resolve_handler(
-                handler=self._get_handler_callback(data)
+                handler=self._get_handler_callback(data), middleware_data=data
             )
         except DependExit:
             return
